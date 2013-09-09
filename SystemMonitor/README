@@ -1,0 +1,25 @@
+Practical Assignment 1: Operating Systems A
+Linux System Information
+
+This system monitor was created by Nathan Floor(FLRNAT001). Please note that this program was designed and created for java-1.6.0
+
+This program consists of the following '.java' files:
+
+1. Runner.java
+2. MainWindow.java
+3. ProcessChecker.java
+4. Process.java
+5. CPUChecker.java
+6. LoadAvgChecker.java
+7. UptimeChecker.java
+8. RefreshData.java
+
+The 'main()' method which starts the program can be found in the "Runner.java" file. The GUI is controlled from the "MainWindow.java" file, and the "RefreshData.java" file is an interface for the GUI to be used whenever the GUI needs to be refreshed, in other words following a Model-View-Controller program design for improved efficiency. The rest of the '.java' files retrieve the system's details and usage information.
+
+The file 'Makefile' compiles the program and has the following explicit rules:
+
+1. clean: deletes all '.class' files
+2. run: runs program
+3. buildnew: cleans, compiles and runs the program
+
+The program itself displays various system information and a listing of all the processes currently active on the system. The user is able to kill a process by enterring in the Pid of the relevant process and press the "Kill Process" button. The processes are sorted according to the amount of memory they're currently using.
