@@ -18,6 +18,7 @@ matplotlib.use('WXAgg')
 from matplotlib.backends.backend_wxagg import FigureCanvasWxAgg as FigCanvas, NavigationToolbar2WxAgg as NavigationToolbar
 from matplotlib.figure import Figure
 from matplotlib.widgets import SpanSelector
+from mpl_toolkits.mplot3d import Axes3D
 
 
 class PlotFrame(wx.Frame):
@@ -48,6 +49,17 @@ class PlotFrame(wx.Frame):
         self.fileReader = csvReader.Reader()
         self.viewLegend = True
         self.viewGrid = True
+        self.current_view = 0
+
+        # initialise data
+        self.option_price = []
+        self.time_span = 0
+
+        self.delta = []
+        self.gamma = []
+        self.vega = []
+        self.theta = []
+        self.rho = []
         
         self.Build_Menus()
         self.Build_Panel()
@@ -75,9 +87,6 @@ class PlotFrame(wx.Frame):
         self.fig = Figure((5.0, 4.0), 100)
         self.canvas = FigCanvas(self.panel, -1, self.fig)
         self.axes = self.fig.add_subplot(111)
-
-        # set useblit True on gtkagg for enhanced performance
-        self.span = SpanSelector(self.axes, self.onselect, 'horizontal', useblit=True, rectprops=dict(alpha=0.5, facecolor='red'))
 
         # setup slider-widgets for controlling GUI
         self.stockSlider_label = wx.StaticText(self.panel, -1, "Stock Price: ")
@@ -175,6 +184,7 @@ class PlotFrame(wx.Frame):
         MENU_BASIC = wx.NewId()
         MENU_ADVANCE = wx.NewId()
         MENU_LEGEND = wx.NewId()
+        MENU_3D = wx.NewId()
 
         menuBar = wx.MenuBar()
 
@@ -196,7 +206,8 @@ class PlotFrame(wx.Frame):
 
         f1 = wx.Menu()
         f1.Append(MENU_BASIC, '&Basic', "Basic View(2D)")
-        f1.Append(MENU_ADVANCE, '&Advanced', "Advanced View(3D)")
+        f1.Append(MENU_ADVANCE, '&Advanced', "Advanced View(2D)")
+        f1.Append(MENU_ADVANCE, 'A&dvanced3D', "Advanced View(3D)")
         menuBar.Append(f1, "&View")
 
         f2 = wx.Menu()
@@ -224,6 +235,7 @@ class PlotFrame(wx.Frame):
         self.Bind(wx.EVT_MENU, self.onHelp,         id=MENU_HELP)
         self.Bind(wx.EVT_MENU, self.onBasicView,    id=MENU_BASIC)
         self.Bind(wx.EVT_MENU, self.onAdvancedView, id=MENU_ADVANCE)
+        self.Bind(wx.EVT_MENU, self.onAdvanced3DView, id=MENU_3D)
 
     """ Menu event methods """
     def onViewLegend(self, event=None):
@@ -234,10 +246,16 @@ class PlotFrame(wx.Frame):
         self.Plot_Data()
 
     def onBasicView(self, event=None):
+        self.current_view = 0
         self.Plot_Data()
 
     def onAdvancedView(self, event=None):
+        self.current_view = 1
         self.Plot_Data_advanced()
+
+    def onAdvanced3DView(self, event=None):
+        self.current_view = 2
+        self.Plot_Data_3D()
 
     def onPrinterSetup(self,event=None):
         self.canvas.Printer_Setup(event=event)
@@ -305,8 +323,12 @@ class PlotFrame(wx.Frame):
         if dlg.ShowModal() == wx.ID_OK:
             path = dlg.GetPath()
             self.fileReader.loadOutputFile(path)
-            self.Plot_Data()
             print('Opened csv file at %s' % path)
+        else:
+            dlg = wx.MessageDialog(self, "Failed to import outputs file", "Complication", wx.OK | wx.ICON_ERROR)
+            dlg.ShowModal()
+            dlg.Destroy()
+            return
 
         # import input file
         dlg = wx.FileDialog(self, message='Import stock prices and other inputs (Inputs)',
@@ -316,8 +338,29 @@ class PlotFrame(wx.Frame):
         if dlg.ShowModal() == wx.ID_OK:
             path = dlg.GetPath()
             self.fileReader.loadInputFile(path)
-            self.Plot_Data()
             print('Opened csv file at %s' % path)
+        else:
+            dlg = wx.MessageDialog(self, "Failed to import inputs file.", "Complication", wx.OK | wx.ICON_ERROR)
+            dlg.ShowModal()
+            dlg.Destroy()
+            return
+
+        # populate data
+        self.option_price = self.fileReader.getOptionPrice(self.callRadio.GetValue())
+        self.time_span = len(self.option_price)
+
+        self.delta = self.fileReader.getDeltaValues(self.callRadio.GetValue(), self.deltaCheck.IsChecked())
+        self.gamma = self.fileReader.getGammaValues(self.callRadio.GetValue(), self.gammaCheck.IsChecked())
+        self.vega = self.fileReader.getVegaValues(self.callRadio.GetValue(), self.epsilonCheck.IsChecked())
+        self.theta = self.fileReader.getThetaValues(self.callRadio.GetValue(), self.thetaCheck.IsChecked())
+        self.rho = self.fileReader.getRhoValues(self.callRadio.GetValue(), self.rhoCheck.IsChecked())
+
+        if self.current_view == 0:
+            self.Plot_Data()
+        elif self.current_view == 1:
+            self.Plot_Data_advanced()
+        else:
+            self.Plot_Data_3D()
 
     def onExit(self,event=None):
         dlg = wx.MessageDialog(None, 'Are you sure to exit?', 'Confirm', wx.YES_NO|wx.NO_DEFAULT|wx.ICON_QUESTION)
@@ -359,31 +402,22 @@ class PlotFrame(wx.Frame):
     def ontimeStepSlider(self, event=None):
         self.Plot_Data()
 
+    """ Graph plotting methods """
     def Plot_Data(self):
         """ 2D graph plotter """
-
-        # initialise data
-        self.option_price = self.fileReader.getOptionPrice(self.callRadio.GetValue())
-        self.time_span = len(self.option_price)
-
-        delta = self.fileReader.getDeltaValues(self.callRadio.GetValue(), self.deltaCheck.IsChecked())
-        gamma = self.fileReader.getGammaValues(self.callRadio.GetValue(), self.gammaCheck.IsChecked())
-        vega = self.fileReader.getVegaValues(self.callRadio.GetValue(), self.epsilonCheck.IsChecked())
-        theta = self.fileReader.getThetaValues(self.callRadio.GetValue(), self.thetaCheck.IsChecked())
-        rho = self.fileReader.getRhoValues(self.callRadio.GetValue(), self.rhoCheck.IsChecked())
-
         # plot graphs
         self.axes.clear()
-        # self.axes = self.fig.add_subplot(111) # can use add_axes, but then nav-toolbar would not work
+        self.axes = self.fig.add_subplot(111) # can use add_axes, but then nav-toolbar would not work
         self.axes.grid(self.viewGrid)
+        self.axes.set_title('Basic View')
 
         self.line1, = self.axes.plot(self.option_price, label="Option Price")
         # self.axes.plot(delta, label="Delta")
         # print(self.option_price)
-        self.axes.plot(gamma, label="Gamma")
-        self.axes.plot(vega, label="Vega")
-        self.axes.plot(theta, label="Theta")
-        self.axes.plot(rho, label="Rho")
+        self.axes.plot(self.gamma, label="Gamma")
+        self.axes.plot(self.vega, label="Vega")
+        self.axes.plot(self.theta, label="Theta")
+        self.axes.plot(self.rho, label="Rho")
 
         if self.viewLegend:
             self.axes.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
@@ -392,20 +426,20 @@ class PlotFrame(wx.Frame):
 
     def Plot_Data_advanced(self):
         """ Advanced 2D plotter """
-        # initialise data
-        self.option_price = self.fileReader.getOptionPrice(self.callRadio.GetValue())
-        self.time_span = len(self.option_price)
-
         # plot graphs
         self.axes.clear()
-        self.axes.set_title('Press left mouse button and drag to test')
         self.axes = self.fig.add_subplot(211)
+        # self.axes.set_title('Advanced View')
         self.axes.grid(self.viewGrid)
 
         self.line1, = self.axes.plot(self.option_price, label="Option Price")
 
         self.axes2 = self.fig.add_subplot(212)
+        self.axes2.grid(self.viewGrid)
         self.line2, = self.axes2.plot(self.option_price, label="Option Price")
+
+        # set useblit True on gtkagg for enhanced performance
+        self.span = SpanSelector(self.axes, self.onselect, 'horizontal', useblit=True, rectprops=dict(alpha=0.5, facecolor='red'))
 
         self.canvas.draw()
 
