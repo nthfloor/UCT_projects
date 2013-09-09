@@ -14,8 +14,18 @@ class Reader():
         self.put_option_data = []
         self.call_option_data = []
 
+    def loadSettingsFile(self, filename, path):
+        self.data_path = ''.join(path+'/')
+        myfile = open(filename, "rb")
+
+        # reads in number input and output files
+        self.num_input_files = myfile.next().split(':')[1].split(';')
+        self.num_output_files = myfile.next().split(':')[1].split(';')
+
+        myfile.close()
+
     def loadOutputFile(self, filename):
-        ifile = open(filename, "rb")
+        ifile = open(''.join(self.data_path+filename), "rb")
         myfile = csv.reader(ifile)
         self.put_option_data = []
         self.call_option_data = []
@@ -36,7 +46,7 @@ class Reader():
         ifile.close()
 
     def loadInputFile(self, filename):
-        ifile = open(filename, "rb")
+        ifile = open(''.join(self.data_path+filename), "rb")
         myfile = csv.reader(ifile)
         self.stock_price_data = []
         counter = 0
@@ -49,9 +59,6 @@ class Reader():
             counter += 1
         map(float, self.stock_price_data)
         ifile.close()
-
-    def getCount(self):
-        return len(self.put_option_data)+len(self.call_option_data)
 
     def getOptionPrice(self, useCallOptionData=True):
         temp = []
@@ -70,7 +77,7 @@ class Reader():
                 for call_option in self.call_option_data:
                     stock_index = map(int, call_option[0])[0]
                     # print(call_option[2])
-                    # delta = map(float, call_option[2])[0]
+                    # delta = map(float, call_option[2])[0] TODO
 
                     t = self.stock_price_data[stock_index+1]
                     x = self.stock_price_data[stock_index]

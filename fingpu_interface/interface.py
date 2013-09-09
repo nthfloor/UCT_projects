@@ -43,7 +43,7 @@ class PlotFrame(wx.Frame):
         Nathan Floor, flrnat001@cs.uct.ac.za"""
 
     def __init__(self):
-        wx.Frame.__init__(self, None, -1, "Visualise Option Prices and Greeks", size=(250, 200))
+        wx.Frame.__init__(self, None, -1, "Visualise Option Prices and Greeks", size=(300, 500))
         self.Bind(wx.EVT_KEY_DOWN, self.onKeyEvent)
 
         self.fileReader = csvReader.Reader()
@@ -63,6 +63,7 @@ class PlotFrame(wx.Frame):
         
         self.Build_Menus()
         self.Build_Panel()
+        self.statusbar = self.CreateStatusBar()
         self.Plot_Data()
 
     # on span-selection of graph TODO still
@@ -84,7 +85,7 @@ class PlotFrame(wx.Frame):
         self.panel = wx.Panel(self)
 
         # Create Figure and canvas objects
-        self.fig = Figure((5.0, 4.0), 100)
+        self.fig = Figure((6.0, 4.0), 100)
         self.canvas = FigCanvas(self.panel, -1, self.fig)
         self.axes = self.fig.add_subplot(111)
 
@@ -155,13 +156,13 @@ class PlotFrame(wx.Frame):
             (self.deltaCheck, 1, wx.EXPAND), (self.gammaCheck, 1, wx.EXPAND), (self.rhoCheck, 1, wx.EXPAND), 
             (self.thetaCheck, 1, wx.EXPAND), (self.epsilonCheck, 1, wx.EXPAND)])
         self.optionsBorder.Add(self.flexiOptions, 1, wx.ALL, 5)
-        self.vboxOptions.Add(self.optionsBorder, 1, flag=wx.ALIGN_LEFT|wx.ALL)               
+        self.vboxOptions.Add(self.optionsBorder, 2, flag=wx.ALIGN_LEFT|wx.ALL|wx.GROW)
 
         self.hboxMainBlock.Add(self.vboxOptions, 0, flag=flags)
         self.hboxMainBlock.Add(self.canvas, 1, flag=wx.ALIGN_RIGHT|wx.ALL|wx.ALIGN_CENTER_VERTICAL)
         self.sizer.Add(self.hboxMainBlock, 0, wx.ALL)
 
-        self.sizer.Add(self.toolbar, 0, wx.ALIGN_RIGHT)
+        self.sizer.AddSpacer(20)
 
         self.canvas.Bind(wx.EVT_KEY_DOWN, self.onKeyEvent)
         self.Bind(wx.EVT_CLOSE, self.onExit)
@@ -311,39 +312,27 @@ class PlotFrame(wx.Frame):
 
     def onImport(self, event=None):
         """ Import csv file of option prices and greeks """
-        file_choices = "CSV (*.csv)|*.csv"
-
-        thisdir  = os.getcwd()
+        file_choices = "SETTINGS (*.settings)|*.settings"
+        thisdir  = ''.join(os.getcwd()+'/data')
 
         # import output file
         dlg = wx.FileDialog(self, message='Import option prices and greeks (Outputs)',
-                            defaultDir = thisdir, defaultFile='outputs.csv',
+                            defaultDir = thisdir, defaultFile='data.settings',
                             wildcard=file_choices, style=wx.OPEN)
 
         if dlg.ShowModal() == wx.ID_OK:
             path = dlg.GetPath()
-            self.fileReader.loadOutputFile(path)
-            print('Opened csv file at %s' % path)
+            self.fileReader.loadSettingsFile(path, thisdir)
+            print('Opened settings file at %s' % path)
         else:
-            dlg = wx.MessageDialog(self, "Failed to import outputs file", "Complication", wx.OK | wx.ICON_ERROR)
+            dlg = wx.MessageDialog(self, "Failed to import the correct settings file.", "Complication", wx.OK | wx.ICON_ERROR)
             dlg.ShowModal()
             dlg.Destroy()
             return
 
-        # import input file
-        dlg = wx.FileDialog(self, message='Import stock prices and other inputs (Inputs)',
-                            defaultDir = thisdir, defaultFile='inputs.csv',
-                            wildcard=file_choices, style=wx.OPEN)
-
-        if dlg.ShowModal() == wx.ID_OK:
-            path = dlg.GetPath()
-            self.fileReader.loadInputFile(path)
-            print('Opened csv file at %s' % path)
-        else:
-            dlg = wx.MessageDialog(self, "Failed to import inputs file.", "Complication", wx.OK | wx.ICON_ERROR)
-            dlg.ShowModal()
-            dlg.Destroy()
-            return
+        # read in all data(inputs & outputs)
+        self.fileReader.loadOutputFile('outputs_0.csv')
+        self.fileReader.loadInputFile('inputs_0.csv')
 
         # populate data
         self.option_price = self.fileReader.getOptionPrice(self.callRadio.GetValue())
@@ -427,7 +416,7 @@ class PlotFrame(wx.Frame):
     def Plot_Data_advanced(self):
         """ Advanced 2D plotter """
         # plot graphs
-        self.axes.clear()
+        self.axes.remove()
         self.axes = self.fig.add_subplot(211)
         # self.axes.set_title('Advanced View')
         self.axes.grid(self.viewGrid)
@@ -445,4 +434,20 @@ class PlotFrame(wx.Frame):
 
     def Plot_Data_3D(self):
         """ Advanced 3D plotter """
-        pass
+        # plot graphs
+        self.axes.clear()
+        self.axes = self.fig.add_subplot(111, projection='3d') # can use add_axes, but then nav-toolbar would not work
+        self.axes.grid(self.viewGrid)
+
+        self.line1, = self.axes.contour(self.option_price, label="Option Price") # wireframes/surface/contour plot
+        # self.axes.plot(delta, label="Delta")
+        # print(self.option_price)
+        self.axes.plot(self.gamma, label="Gamma")
+        self.axes.plot(self.vega, label="Vega")
+        self.axes.plot(self.theta, label="Theta")
+        self.axes.plot(self.rho, label="Rho")
+
+        if self.viewLegend:
+            self.axes.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
+            # self.axes.legend(bbox_to_anchor=(0., 1.02, 1., .102), loc=3, ncol=1)
+        self.canvas.draw()
