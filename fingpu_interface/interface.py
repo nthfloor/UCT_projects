@@ -10,24 +10,17 @@ from __future__ import division, print_function
 
 import wx
 import os
-# import numpy
+import numpy
 import matplotlib
 import csvReader
 
 matplotlib.use('WXAgg')
 from matplotlib.backends.backend_wxagg import FigureCanvasWxAgg as FigCanvas, NavigationToolbar2WxAgg as NavigationToolbar
 from matplotlib.figure import Figure
+from matplotlib.widgets import SpanSelector
 
 
 class PlotFrame(wx.Frame):
-    global fileReader
-    global viewGrid
-    global viewLegend
-
-    fileReader = csvReader.Reader()
-    viewGrid = True
-    viewLegend = True
-
     help_msg="""  Menus for
      Save           export figure (png, jpg) to file
      Open           import csv file of option prices
@@ -51,10 +44,29 @@ class PlotFrame(wx.Frame):
     def __init__(self):
         wx.Frame.__init__(self, None, -1, "Visualise Option Prices and Greeks", size=(250, 200))
         self.Bind(wx.EVT_KEY_DOWN, self.onKeyEvent)
+
+        self.fileReader = csvReader.Reader()
+        self.viewLegend = True
+        self.viewGrid = True
         
         self.Build_Menus()
         self.Build_Panel()
         self.Plot_Data()
+
+    # on span-selection of graph TODO still
+    def onselect(self, xmin, xmax):
+        print("onselect")
+        print(xmin)
+        print(xmax)
+        indmin, indmax = numpy.searchsorted(self.time_span, (xmin, xmax)) # TODO here
+        indmax = min(len(self.option_price)-1, indmax)
+
+        thisx = self.time_span[indmin:indmax]
+        thisy = self.option_price[indmin:indmax]
+        self.line2.set_data(thisx, thisy)
+        self.axes2.set_xlim(thisx[0], thisx[-1])
+        self.axes2.set_ylim(thisy.min(), thisy.max())
+        self.canvas.draw()
 
     def Build_Panel(self):
         self.panel = wx.Panel(self)
@@ -62,9 +74,10 @@ class PlotFrame(wx.Frame):
         # Create Figure and canvas objects
         self.fig = Figure((5.0, 4.0), 100)
         self.canvas = FigCanvas(self.panel, -1, self.fig)
-
-        # can use add_axes, but then nav-toolbar would not work
         self.axes = self.fig.add_subplot(111)
+
+        # set useblit True on gtkagg for enhanced performance
+        self.span = SpanSelector(self.axes, self.onselect, 'horizontal', useblit=True, rectprops=dict(alpha=0.5, facecolor='red'))
 
         # setup slider-widgets for controlling GUI
         self.stockSlider_label = wx.StaticText(self.panel, -1, "Stock Price: ")
@@ -214,18 +227,17 @@ class PlotFrame(wx.Frame):
 
     """ Menu event methods """
     def onViewLegend(self, event=None):
-        global viewLegend
-        if viewLegend:
-            viewLegend = False
+        if self.viewLegend:
+            self.viewLegend = False
         else:
-            viewLegend = True
+            self.viewLegend = True
         self.Plot_Data()
 
     def onBasicView(self, event=None):
         self.Plot_Data()
 
     def onAdvancedView(self, event=None):
-        self.Plot_Data()
+        self.Plot_Data_advanced()
 
     def onPrinterSetup(self,event=None):
         self.canvas.Printer_Setup(event=event)
@@ -254,11 +266,10 @@ class PlotFrame(wx.Frame):
         dlg.Destroy()
 
     def onViewGrid(self, event=None):
-        global viewGrid
-        if viewGrid:
-            viewGrid = False
+        if self.viewGrid:
+            self.viewGrid = False
         else:
-            viewGrid = True
+            self.viewGrid = True
         self.Plot_Data()
 
     def onExport(self,event=None):
@@ -291,10 +302,9 @@ class PlotFrame(wx.Frame):
                             defaultDir = thisdir, defaultFile='outputs.csv',
                             wildcard=file_choices, style=wx.OPEN)
 
-        global fileReader
         if dlg.ShowModal() == wx.ID_OK:
             path = dlg.GetPath()
-            fileReader.loadOutputFile(path)
+            self.fileReader.loadOutputFile(path)
             self.Plot_Data()
             print('Opened csv file at %s' % path)
 
@@ -305,7 +315,7 @@ class PlotFrame(wx.Frame):
 
         if dlg.ShowModal() == wx.ID_OK:
             path = dlg.GetPath()
-            fileReader.loadInputFile(path)
+            self.fileReader.loadInputFile(path)
             self.Plot_Data()
             print('Opened csv file at %s' % path)
 
@@ -351,29 +361,54 @@ class PlotFrame(wx.Frame):
 
     def Plot_Data(self):
         """ 2D graph plotter """
-        global fileReader, viewGrid, viewLegend
 
-        # t = numpy.arange(0.0,5.0,0.01)
-        # s = numpy.sin(2.0*numpy.pi*t)
-        # c = numpy.cos(0.4*numpy.pi*t)
+        # initialise data
+        self.option_price = self.fileReader.getOptionPrice(self.callRadio.GetValue())
+        self.time_span = len(self.option_price)
 
-        option_price = fileReader.getOptionPrice(self.callRadio.GetValue())
-        delta = fileReader.getDeltaValues(self.callRadio.GetValue(), self.deltaCheck.IsChecked())
-        gamma = fileReader.getGammaValues(self.callRadio.GetValue(), self.gammaCheck.IsChecked())
-        vega = fileReader.getVegaValues(self.callRadio.GetValue(), self.epsilonCheck.IsChecked())
-        theta = fileReader.getThetaValues(self.callRadio.GetValue(), self.thetaCheck.IsChecked())
-        rho = fileReader.getRhoValues(self.callRadio.GetValue(), self.rhoCheck.IsChecked())
+        delta = self.fileReader.getDeltaValues(self.callRadio.GetValue(), self.deltaCheck.IsChecked())
+        gamma = self.fileReader.getGammaValues(self.callRadio.GetValue(), self.gammaCheck.IsChecked())
+        vega = self.fileReader.getVegaValues(self.callRadio.GetValue(), self.epsilonCheck.IsChecked())
+        theta = self.fileReader.getThetaValues(self.callRadio.GetValue(), self.thetaCheck.IsChecked())
+        rho = self.fileReader.getRhoValues(self.callRadio.GetValue(), self.rhoCheck.IsChecked())
 
+        # plot graphs
         self.axes.clear()
-        self.axes.grid(viewGrid)
-        p1, = self.axes.plot(option_price, label="Option Price")
-        self.axes.plot(delta, label="Delta")
+        # self.axes = self.fig.add_subplot(111) # can use add_axes, but then nav-toolbar would not work
+        self.axes.grid(self.viewGrid)
+
+        self.line1, = self.axes.plot(self.option_price, label="Option Price")
+        # self.axes.plot(delta, label="Delta")
+        # print(self.option_price)
         self.axes.plot(gamma, label="Gamma")
         self.axes.plot(vega, label="Vega")
         self.axes.plot(theta, label="Theta")
         self.axes.plot(rho, label="Rho")
 
-        if viewLegend:
+        if self.viewLegend:
             self.axes.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
             # self.axes.legend(bbox_to_anchor=(0., 1.02, 1., .102), loc=3, ncol=1)
         self.canvas.draw()
+
+    def Plot_Data_advanced(self):
+        """ Advanced 2D plotter """
+        # initialise data
+        self.option_price = self.fileReader.getOptionPrice(self.callRadio.GetValue())
+        self.time_span = len(self.option_price)
+
+        # plot graphs
+        self.axes.clear()
+        self.axes.set_title('Press left mouse button and drag to test')
+        self.axes = self.fig.add_subplot(211)
+        self.axes.grid(self.viewGrid)
+
+        self.line1, = self.axes.plot(self.option_price, label="Option Price")
+
+        self.axes2 = self.fig.add_subplot(212)
+        self.line2, = self.axes2.plot(self.option_price, label="Option Price")
+
+        self.canvas.draw()
+
+    def Plot_Data_3D(self):
+        """ Advanced 3D plotter """
+        pass
