@@ -1,0 +1,30 @@
+README - ICV Hough Transform
+
+Nathan Floor
+FLRNAT001
+
+This project has been done in java which means it should function on all platforms as long Java is installed.
+I have included a makefile with which you can compile and run the code as follows:
+
+	- make 
+	- make run
+
+	or alternatively:
+	- make crun(a combination of the above commands)
+
+For convenience I have included a jar file with the project. Remember to make the jar file executable before running it. Otherwise jun it from the command line with the following command:
+	
+	- java -jar {filename}.jar
+	- Or if you prefer using a makefile
+		- make run_jar
+
+I have only tested this on Ubuntu. So if it does not work, you will need to use the makefile. 
+
+INSTRUCTIONS:
+
+You need to load an image into the program. A dialog will appear to assist you. I have provided the first image from the samples. You then need to select what radius boundries you want and what number of circles you want the algorithm to use. 
+
+3 images will be displayed. The original, the accumulated values and the original again, but this time with the shape's outline highlighted over the original. 
+You need to press the 'Process' button to start the analysis process. 
+
+Just to NOTE that the range slider I used was not my code, I got it off https://github.com/ernieyu/Swing-range-slider. Which I used for the radius double-ended slider.
