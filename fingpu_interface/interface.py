@@ -116,7 +116,7 @@ class PlotFrame(wx.Frame):
         self.gammaCheck = wx.CheckBox(self.panel, label="Gamma", pos=(20, 20))
         self.rhoCheck = wx.CheckBox(self.panel, label="Rho", pos=(20, 20))
         self.thetaCheck = wx.CheckBox(self.panel, label="Theta", pos=(20, 20))
-        self.epsilonCheck = wx.CheckBox(self.panel, label="Epsilon", pos=(20, 20))
+        self.vegaCheck = wx.CheckBox(self.panel, label="Vega", pos=(20, 20))
 
         self.Bind(wx.EVT_RADIOBUTTON, self.onCallRadio, self.callRadio)
         self.Bind(wx.EVT_RADIOBUTTON, self.onPutRadio, self.putRadio)
@@ -124,7 +124,7 @@ class PlotFrame(wx.Frame):
         self.Bind(wx.EVT_CHECKBOX, self.onGamma, self.gammaCheck)
         self.Bind(wx.EVT_CHECKBOX, self.onRho, self.rhoCheck)
         self.Bind(wx.EVT_CHECKBOX, self.onTheta, self.thetaCheck)
-        self.Bind(wx.EVT_CHECKBOX, self.onEpsilon, self.epsilonCheck)
+        self.Bind(wx.EVT_CHECKBOX, self.onVega, self.vegaCheck)
 
         # Create the navigation toolbar, tied to the canvas
         self.toolbar = NavigationToolbar(self.canvas)
@@ -154,7 +154,7 @@ class PlotFrame(wx.Frame):
         self.flexiOptions = wx.FlexGridSizer(8, 1, 3, 10)
         self.flexiOptions.AddMany([(self.callRadio, 1, wx.EXPAND), (self.putRadio, 1, wx.EXPAND), (self.spaceKeeper), 
             (self.deltaCheck, 1, wx.EXPAND), (self.gammaCheck, 1, wx.EXPAND), (self.rhoCheck, 1, wx.EXPAND), 
-            (self.thetaCheck, 1, wx.EXPAND), (self.epsilonCheck, 1, wx.EXPAND)])
+            (self.thetaCheck, 1, wx.EXPAND), (self.vegaCheck, 1, wx.EXPAND)])
         self.optionsBorder.Add(self.flexiOptions, 1, wx.ALL, 5)
         self.vboxOptions.Add(self.optionsBorder, 2, flag=wx.ALIGN_LEFT|wx.ALL|wx.GROW)
 
@@ -340,7 +340,7 @@ class PlotFrame(wx.Frame):
 
         self.delta = self.fileReader.getDeltaValues(self.callRadio.GetValue(), self.deltaCheck.IsChecked())
         self.gamma = self.fileReader.getGammaValues(self.callRadio.GetValue(), self.gammaCheck.IsChecked())
-        self.vega = self.fileReader.getVegaValues(self.callRadio.GetValue(), self.epsilonCheck.IsChecked())
+        self.vega = self.fileReader.getVegaValues(self.callRadio.GetValue(), self.vegaCheck.IsChecked())
         self.theta = self.fileReader.getThetaValues(self.callRadio.GetValue(), self.thetaCheck.IsChecked())
         self.rho = self.fileReader.getRhoValues(self.callRadio.GetValue(), self.rhoCheck.IsChecked())
 
@@ -359,24 +359,43 @@ class PlotFrame(wx.Frame):
 
     """ GUI event methods """
     def onCallRadio(self, event=None):
+        self.option_price = self.fileReader.getOptionPrice(self.callRadio.GetValue())
+        self.time_span = len(self.option_price)
+        self.delta = self.fileReader.getDeltaValues(self.callRadio.GetValue(), self.deltaCheck.IsChecked())
+        self.gamma = self.fileReader.getGammaValues(self.callRadio.GetValue(), self.gammaCheck.IsChecked())
+        self.vega = self.fileReader.getVegaValues(self.callRadio.GetValue(), self.vegaCheck.IsChecked())
+        self.theta = self.fileReader.getThetaValues(self.callRadio.GetValue(), self.thetaCheck.IsChecked())
+        self.rho = self.fileReader.getRhoValues(self.callRadio.GetValue(), self.rhoCheck.IsChecked())
         self.Plot_Data()
 
     def onPutRadio(self, event=None):
+        self.option_price = self.fileReader.getOptionPrice(self.callRadio.GetValue())
+        self.time_span = len(self.option_price)
+        self.delta = self.fileReader.getDeltaValues(self.callRadio.GetValue(), self.deltaCheck.IsChecked())
+        self.gamma = self.fileReader.getGammaValues(self.callRadio.GetValue(), self.gammaCheck.IsChecked())
+        self.vega = self.fileReader.getVegaValues(self.callRadio.GetValue(), self.vegaCheck.IsChecked())
+        self.theta = self.fileReader.getThetaValues(self.callRadio.GetValue(), self.thetaCheck.IsChecked())
+        self.rho = self.fileReader.getRhoValues(self.callRadio.GetValue(), self.rhoCheck.IsChecked())
         self.Plot_Data() 
 
     def onDelta(self, event=None):
+        self.delta = self.fileReader.getDeltaValues(self.callRadio.GetValue(), self.deltaCheck.IsChecked())
         self.Plot_Data()
 
     def onGamma(self, event=None):
+        self.gamma = self.fileReader.getGammaValues(self.callRadio.GetValue(), self.gammaCheck.IsChecked())
         self.Plot_Data()
 
     def onRho(self, event=None):
+        self.rho = self.fileReader.getRhoValues(self.callRadio.GetValue(), self.rhoCheck.IsChecked())
         self.Plot_Data()
 
     def onTheta(self, event=None):
+        self.theta = self.fileReader.getThetaValues(self.callRadio.GetValue(), self.thetaCheck.IsChecked())
         self.Plot_Data()
 
-    def onEpsilon(self, event=None):
+    def onVega(self, event=None):
+        self.vega = self.fileReader.getVegaValues(self.callRadio.GetValue(), self.vegaCheck.IsChecked())
         self.Plot_Data()
 
     def onStockSlider(self, event=None):
@@ -401,8 +420,7 @@ class PlotFrame(wx.Frame):
         self.axes.set_title('Basic View')
 
         self.line1, = self.axes.plot(self.option_price, label="Option Price")
-        # self.axes.plot(delta, label="Delta")
-        # print(self.option_price)
+        self.axes.plot(self.delta, label="Delta")
         self.axes.plot(self.gamma, label="Gamma")
         self.axes.plot(self.vega, label="Vega")
         self.axes.plot(self.theta, label="Theta")
