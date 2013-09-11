@@ -165,8 +165,8 @@ class PlotFrame(wx.Frame):
         self.vboxOptions.Add(self.optionsBorder, 2, flag=wx.ALIGN_LEFT|wx.ALL|wx.GROW)
 
         self.hboxMainBlock.Add(self.vboxOptions, 0, flag=flags)
-        self.hboxMainBlock.Add(self.canvas, 1, flag=wx.ALIGN_RIGHT|wx.ALL|wx.ALIGN_CENTER_VERTICAL)
-        self.sizer.Add(self.hboxMainBlock, 0, wx.ALL)
+        self.hboxMainBlock.Add(self.canvas, 1, flag=wx.ALIGN_RIGHT|wx.ALL|wx.ALIGN_CENTER_VERTICAL|wx.EXPAND)
+        self.sizer.Add(self.hboxMainBlock, 0, wx.ALL|wx.EXPAND)
 
         self.sizer.Add(self.toolbar, 1, wx.ALL|wx.ALIGN_RIGHT)
         self.sizer.AddSpacer(1)
