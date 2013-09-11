@@ -41,8 +41,8 @@ class Reader():
                 self.call_option_data.append(row)
             counter += 1
         self.put_option_data.pop(0) # remove headers for each column
-        # map(float, put_option_data)
-        # map(float, call_option_data)
+        # put_option_data = map(float, put_option_data)
+        # call_option_data = map(float, call_option_data)
         # print(put_option_data)
         ifile.close()
 
@@ -65,7 +65,7 @@ class Reader():
 
             counter += 1
         # map(float, self.stock_price_data)
-        print(self.interest_rate_data)
+        # print(self.interest_rate_data)
         ifile.close()
 
     def getOptionPrice(self, useCallOptionData=True):

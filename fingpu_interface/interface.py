@@ -18,7 +18,7 @@ matplotlib.use('WXAgg')
 from matplotlib.backends.backend_wxagg import FigureCanvasWxAgg as FigCanvas, NavigationToolbar2WxAgg as NavigationToolbar
 from matplotlib.figure import Figure
 from matplotlib.widgets import SpanSelector
-from mpl_toolkits.mplot3d import Axes3D
+from mpl_toolkits.mplot3d import axes3d
 
 
 class PlotFrame(wx.Frame):
@@ -47,13 +47,15 @@ class PlotFrame(wx.Frame):
         self.Bind(wx.EVT_KEY_DOWN, self.onKeyEvent)
 
         self.fileReader = csvReader.Reader()
-        self.viewLegend = True
+        self.viewLegend = False
         self.viewGrid = True
         self.current_view = 0
 
         # initialise data
         self.option_price = []
-        self.time_span = 0
+        self.time_span = []
+        for x in xrange(1,31):
+            self.time_span.append(x)
 
         self.delta = []
         self.gamma = []
@@ -65,20 +67,24 @@ class PlotFrame(wx.Frame):
         self.Build_Panel()
         self.statusbar = self.CreateStatusBar()
         self.Plot_Data()
+        self.SetSize(size=(830, 480))
 
     # on span-selection of graph TODO still
     def onselect(self, xmin, xmax):
-        print("onselect")
-        print(xmin)
-        print(xmax)
-        indmin, indmax = numpy.searchsorted(self.time_span, (xmin, xmax)) # TODO here
-        indmax = min(len(self.option_price)-1, indmax)
+        print("onselect", xmin, xmax)
+        indmin = int(xmin)
+        # indmax = numpy.searchsorted(self.time_span, (xmin, xmax)) # TODO here
+        indmax = min(len(self.option_price)-1, int(xmax))
 
         thisx = self.time_span[indmin:indmax]
         thisy = self.option_price[indmin:indmax]
-        self.line2.set_data(thisx, thisy)
-        self.axes2.set_xlim(thisx[0], thisx[-1])
-        self.axes2.set_ylim(thisy.min(), thisy.max())
+
+        thisy = map(float, thisy)
+        # print(thisy)
+
+        self.line1.set_data(thisx, thisy)
+        self.axes.set_xlim(thisx[0], thisx[-1])
+        self.axes.set_ylim(thisy[0], thisy[-1])
         self.canvas.draw()
 
     def Build_Panel(self):
@@ -162,7 +168,8 @@ class PlotFrame(wx.Frame):
         self.hboxMainBlock.Add(self.canvas, 1, flag=wx.ALIGN_RIGHT|wx.ALL|wx.ALIGN_CENTER_VERTICAL)
         self.sizer.Add(self.hboxMainBlock, 0, wx.ALL)
 
-        self.sizer.AddSpacer(20)
+        self.sizer.Add(self.toolbar, 1, wx.ALL|wx.ALIGN_RIGHT)
+        self.sizer.AddSpacer(1)
 
         self.canvas.Bind(wx.EVT_KEY_DOWN, self.onKeyEvent)
         self.Bind(wx.EVT_CLOSE, self.onExit)
@@ -273,7 +280,7 @@ class PlotFrame(wx.Frame):
     def onKeyEvent(self,event=None):
         """ capture and act upon keystroke events """
         if event == None: return
-        key = event.KeyCode()
+        key = event.GetKeyCode()
         if (key < wx.WXK_SPACE or  key > 255):  return
 
         if (event.ControlDown() and chr(key)=='C'): # Ctrl-C
@@ -336,7 +343,6 @@ class PlotFrame(wx.Frame):
 
         # populate data
         self.option_price = self.fileReader.getOptionPrice(self.callRadio.GetValue())
-        self.time_span = len(self.option_price)
 
         self.delta = self.fileReader.getDeltaValues(self.callRadio.GetValue(), self.deltaCheck.IsChecked())
         self.gamma = self.fileReader.getGammaValues(self.callRadio.GetValue(), self.gammaCheck.IsChecked())
@@ -360,7 +366,6 @@ class PlotFrame(wx.Frame):
     """ GUI event methods """
     def onCallRadio(self, event=None):
         self.option_price = self.fileReader.getOptionPrice(self.callRadio.GetValue())
-        self.time_span = len(self.option_price)
         self.delta = self.fileReader.getDeltaValues(self.callRadio.GetValue(), self.deltaCheck.IsChecked())
         self.gamma = self.fileReader.getGammaValues(self.callRadio.GetValue(), self.gammaCheck.IsChecked())
         self.vega = self.fileReader.getVegaValues(self.callRadio.GetValue(), self.vegaCheck.IsChecked())
@@ -370,7 +375,6 @@ class PlotFrame(wx.Frame):
 
     def onPutRadio(self, event=None):
         self.option_price = self.fileReader.getOptionPrice(self.callRadio.GetValue())
-        self.time_span = len(self.option_price)
         self.delta = self.fileReader.getDeltaValues(self.callRadio.GetValue(), self.deltaCheck.IsChecked())
         self.gamma = self.fileReader.getGammaValues(self.callRadio.GetValue(), self.gammaCheck.IsChecked())
         self.vega = self.fileReader.getVegaValues(self.callRadio.GetValue(), self.vegaCheck.IsChecked())
@@ -414,10 +418,10 @@ class PlotFrame(wx.Frame):
     def Plot_Data(self):
         """ 2D graph plotter """
         # plot graphs
-        self.axes.clear()
+        self.fig.delaxes(self.axes)
         self.axes = self.fig.add_subplot(111) # can use add_axes, but then nav-toolbar would not work
         self.axes.grid(self.viewGrid)
-        self.axes.set_title('Basic View')
+        # self.axes.set_title('Basic View')
 
         self.line1, = self.axes.plot(self.option_price, label="Option Price")
         self.axes.plot(self.delta, label="Delta")
@@ -427,14 +431,22 @@ class PlotFrame(wx.Frame):
         self.axes.plot(self.rho, label="Rho")
 
         if self.viewLegend:
-            self.axes.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
-            # self.axes.legend(bbox_to_anchor=(0., 1.02, 1., .102), loc=3, ncol=1)
+            # Shink current axis by 15%
+            box = self.axes.get_position()
+            self.axes.set_position([box.x0, box.y0, box.width * 0.85, box.height])
+
+            # Put a legend to the right of the current axis
+            self.axes.legend(loc='center left', bbox_to_anchor=(1, 0.5), prop={'size':8})
+
+        # set useblit True on gtkagg for enhanced performance
+        # self.span = SpanSelector(self.axes, self.onselect, 'horizontal', useblit=True, rectprops=dict(alpha=0.5, facecolor='red'))
+
         self.canvas.draw()
 
     def Plot_Data_advanced(self):
         """ Advanced 2D plotter """
         # plot graphs
-        self.axes.remove()
+        self.fig.delaxes(self.axes)
         self.axes = self.fig.add_subplot(211)
         # self.axes.set_title('Advanced View')
         self.axes.grid(self.viewGrid)
@@ -458,6 +470,7 @@ class PlotFrame(wx.Frame):
         self.axes.grid(self.viewGrid)
 
         self.line1, = self.axes.contour(self.option_price, label="Option Price") # wireframes/surface/contour plot
+        # ax.plot_wireframe(X, Y, Z, rstride=10, cstride=10)
         # self.axes.plot(delta, label="Delta")
         # print(self.option_price)
         self.axes.plot(self.gamma, label="Gamma")
