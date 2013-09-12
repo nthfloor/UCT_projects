@@ -20,30 +20,46 @@ class Reader():
         myfile = open(filename, "rb")
 
         # reads in number input and output files
-        self.num_input_files = myfile.next().split(':')[1].split(';')
-        self.num_output_files = myfile.next().split(':')[1].split(';')
+        self.num_input_files = int(myfile.next().split(':')[1].split(';')[0].strip())
+        self.num_output_files = int(myfile.next().split(':')[1].split(';')[0].strip())
+        # print(self.num_output_files)
 
+        self.time_span = []
+        for x in xrange(1,31*self.num_output_files):
+            self.time_span.append(x)
         myfile.close()
+
+        # Read in all data for greeks
+        for x in xrange(0, self.num_output_files):
+            print('reading in...outputs_'+str(x)+'.csv')
+            self.loadOutputFile('outputs_'+str(x)+'.csv')
+
+        print("reading in...inputs.csv")
+        self.loadInputFile('inputs.csv')
 
     def loadOutputFile(self, filename):
         ifile = open(''.join(self.data_path+filename), "rb")
         myfile = csv.reader(ifile)
-        self.put_option_data = []
-        self.call_option_data = []
+        put_temp_data = []
+        call_temp_data = []
         counter = 0
 
         # reads in alternate lines to relevant arrays(splitting call and put option data)
         for row in myfile:
             row.pop(1)
             if counter % 2 == 0:
-                self.put_option_data.append(row)
+                put_temp_data.append(row)
             else:
-                self.call_option_data.append(row)
+                call_temp_data.append(row)
             counter += 1
-        self.put_option_data.pop(0) # remove headers for each column
+        put_temp_data.pop(0) # remove headers for each column
+
+        self.put_option_data.append(put_temp_data)
+        self.call_option_data.append(call_temp_data)
+
         # put_option_data = map(float, put_option_data)
         # call_option_data = map(float, call_option_data)
-        # print(put_option_data)
+        # print(self.put_option_data)
         ifile.close()
 
     def loadInputFile(self, filename):
@@ -56,11 +72,11 @@ class Reader():
         # retrieve input data
         for row in myfile:
             # get stock prices
-            if counter >= 13 and counter <= 43:
+            if counter >= 16 and counter <= 46:
                 self.stock_price_data.append(row[0].split(' ')[1])
 
             # get interest rates
-            if counter >= 44 and counter <= 74:
+            if counter >= 47 and counter <= 77:
                 self.interest_rate_data.append(row[0].split(' ')[1])
 
             counter += 1
@@ -68,134 +84,181 @@ class Reader():
         # print(self.interest_rate_data)
         ifile.close()
 
-    def getOptionPrice(self, useCallOptionData=True):
+    def getOptionPrice(self, useCallOptionData=True, viewOptionPriceValues=True):
         temp = []
-        if useCallOptionData:
-            for call_option in self.call_option_data:
-                temp.append(call_option[1])
-        else:
-            for put_option in self.put_option_data:
-                temp.append(put_option[1])
-        return temp
-
-    def getDeltaValues(self, useCallOptionData, viewDeltaValues=True):
-        temp = []
-        if viewDeltaValues:
+        tempOption = []
+        if viewOptionPriceValues:
             if useCallOptionData:
                 for call_option in self.call_option_data:
-                    stock_index = int(call_option[0])-1
-                    greek_value = float(call_option[2])
-
-                    if stock_index < 30:
-                        s1 = float(self.stock_price_data[stock_index])
-                        s2 = float(self.stock_price_data[stock_index+1])
-                        greek_value = greek_value*(s2-s1) # calculate delta effect relative to option price
-                        # print(stock_index,s1,s2,t, delta, float(call_option[1]))
-                        temp.append(greek_value+float(call_option[1]))
+                    for call in call_option:
+                        tempOption.append(call[1])
+                    temp.append(tempOption)
+                    tempOption = []
             else:
                 for put_option in self.put_option_data:
-                    stock_index = int(put_option[0])-1
-                    greek_value = float(put_option[2])
+                    for put in put_option:
+                        tempOption.append(put[1])
+                    temp.append(tempOption)
+                    tempOption = []
+        return temp
 
-                    if stock_index < 30:
-                        s1 = float(self.stock_price_data[stock_index])
-                        s2 = float(self.stock_price_data[stock_index+1])
-                        greek_value = greek_value*(s2-s1) # calculate delta effect relative to option price
-                        # print(stock_index,s1,s2, delta, float(put_option[1]))
-                        temp.append(greek_value+float(put_option[1]))
+    def getDeltaValues(self, useCallOptionData=True, viewDeltaValues=True):
+        temp = []
+        tempDelta = []
+        if viewDeltaValues:
+            if useCallOptionData:
+                for call_option_file in self.call_option_data:
+                    for call_option in call_option_file:
+                        stock_index = int(call_option[0])-1
+                        greek_value = float(call_option[2])
+
+                        if stock_index < 30:
+                            s1 = float(self.stock_price_data[stock_index])
+                            s2 = float(self.stock_price_data[stock_index+1])
+                            greek_value = greek_value*(s2-s1) # calculate delta effect relative to option price
+                            tempDelta.append(greek_value+float(call_option[1]))
+                        else:
+                            tempDelta.append(0)
+                    temp.append(tempDelta)
+                    tempDelta = []
+            else:
+                for put_option_file in self.put_option_data:
+                    for put_option in put_option_file:
+                        stock_index = int(put_option[0])-1
+                        greek_value = float(put_option[2])
+
+                        if stock_index < 30:
+                            s1 = float(self.stock_price_data[stock_index])
+                            s2 = float(self.stock_price_data[stock_index+1])
+                            greek_value = greek_value*(s2-s1) # calculate delta effect relative to option price
+                            tempDelta.append(greek_value+float(put_option[1]))
+                        else:
+                            tempDelta.append(0)
+                    temp.append(tempDelta)
+                    tempDelta = []
         return temp
 
     def getGammaValues(self, useCallOptionData, viewGammaValues=True):
         temp = []
+        tempGamma = []
         if viewGammaValues:
             if useCallOptionData:
-                for call_option in self.call_option_data:
-                    stock_index = int(call_option[0])-1
-                    gamma = float(call_option[3])
-
-                    if stock_index < 30:
-                        s1 = float(self.stock_price_data[stock_index])
-                        s2 = float(self.stock_price_data[stock_index+1])
-                        gamma = gamma*(s2-s1) # calculate delta effect relative to option price
-                        # print(stock_index,s1,s2, gamma, float(call_option[1]))
-                        temp.append(gamma+float(call_option[1]))
+                for call_option_file in self.call_option_data:
+                    for call_option in call_option_file:
+                        stock_index = int(call_option[0])-1
+                        gamma = float(call_option[3])
+                        if stock_index < 30:
+                            s1 = float(self.stock_price_data[stock_index])
+                            s2 = float(self.stock_price_data[stock_index+1])
+                            gamma = gamma*(s2-s1) # calculate delta effect relative to option price
+                            tempGamma.append(gamma+float(call_option[1]))
+                        else:
+                            tempGamma.append(0)
+                    temp.append(tempGamma)
+                    tempGamma = []
             else:
-                for put_option in self.put_option_data:
-                    stock_index = int(put_option[0])-1
-                    greek_value = float(put_option[3])
-
-                    if stock_index < 30:
-                        s1 = float(self.stock_price_data[stock_index])
-                        s2 = float(self.stock_price_data[stock_index+1])
-                        greek_value = greek_value*(s2-s1) # calculate delta effect relative to option price
-                        # print(stock_index,s1,s2,gamma, float(put_option[1]))
-                        temp.append(greek_value+float(put_option[1]))
+                for put_option_file in self.put_option_data:
+                    for put_option in put_option_file:
+                        stock_index = int(put_option[0])-1
+                        greek_value = float(put_option[3])
+                        if stock_index < 30:
+                            s1 = float(self.stock_price_data[stock_index])
+                            s2 = float(self.stock_price_data[stock_index+1])
+                            greek_value = greek_value*(s2-s1) # calculate delta effect relative to option price
+                            tempGamma.append(greek_value+float(put_option[1]))
+                        else:
+                            tempGamma.append(0)
+                    temp.append(tempGamma)
+                    tempGamma = []
         return temp
 
     def getVegaValues(self, useCallOptionData, viewVegaValues=True):
         temp = []
+        tempVega = []
         if viewVegaValues:
             if useCallOptionData:
-                for call_option in self.call_option_data:
-                    stock_index = int(call_option[0])-1
-                    greek_value = float(call_option[4])
+                for call_option_file in self.call_option_data:
+                    for call_option in call_option_file:
+                        stock_index = int(call_option[0])-1
+                        greek_value = float(call_option[4])
 
-                    if stock_index < 30:
-                        s1 = float(self.stock_price_data[stock_index])
-                        s2 = float(self.stock_price_data[stock_index+1])
-                        greek_value = greek_value*(s2-s1) # calculate delta effect relative to option price
-                        print(stock_index,s1,s2, greek_value, float(call_option[1]))
-                        temp.append(greek_value+float(call_option[1]))
+                        if stock_index < 30:
+                            s1 = float(self.stock_price_data[stock_index])
+                            s2 = float(self.stock_price_data[stock_index+1])
+                            greek_value = greek_value*(s2-s1) # calculate delta effect relative to option price
+                            print(stock_index,s1,s2, greek_value, float(call_option[1]))
+                            tempVega.append(greek_value+float(call_option[1]))
+                        else:
+                            tempVega.append(0)
+                    temp.append(tempVega)
+                    tempVega = []
             else:
-                for put_option in self.put_option_data:
-                    stock_index = int(put_option[0])-1
-                    greek_value = float(put_option[4])
+                for put_option_file in self.put_option_data:
+                    for put_option in put_option_file:
+                        stock_index = int(put_option[0])-1
+                        greek_value = float(put_option[4])
 
-                    if stock_index < 30:
-                        s1 = float(self.stock_price_data[stock_index])
-                        s2 = float(self.stock_price_data[stock_index+1])
-                        greek_value = greek_value*(s2-s1) # calculate delta effect relative to option price
-                        # print(stock_index,s1,s2,gamma, float(put_option[1]))
-                        temp.append(greek_value+float(put_option[1]))
+                        if stock_index < 30:
+                            s1 = float(self.stock_price_data[stock_index])
+                            s2 = float(self.stock_price_data[stock_index+1])
+                            greek_value = greek_value*(s2-s1) # calculate delta effect relative to option price
+                            tempVega.append(greek_value+float(put_option[1]))
+                        else:
+                            tempVega.append(0)
+                    temp.append(tempVega)
+                    tempVega = []
         return temp
 
     def getThetaValues(self, useCallOptionData, viewThetaValues=True):
         temp = []
+        tempTheta = []
         if viewThetaValues:
             if useCallOptionData:
-                for call_option in self.call_option_data:
-                    greek_value = float(call_option[5])/365
-                    # print(greek_value, float(call_option[1]))
-                    temp.append(greek_value+float(call_option[1]))
+                for call_option_file in self.call_option_data:
+                    for call_option in call_option_file:
+                        greek_value = float(call_option[5])/365
+                        tempTheta.append(greek_value+float(call_option[1]))
+                    temp.append(tempTheta)
+                    tempTheta = []
             else:
-                for put_option in self.put_option_data:
-                    greek_value = float(put_option[5])
-                    temp.append(greek_value+float(put_option[1]))
+                for put_option_file in self.put_option_data:
+                    for put_option in put_option_file:
+                        greek_value = float(put_option[5])
+                        tempTheta.append(greek_value+float(put_option[1]))
+                    temp.append(tempTheta)
+                    tempTheta = []
         return temp
 
     def getRhoValues(self, useCallOptionData, viewRhoValues=True):
         temp = []
+        tempRho = []
         if viewRhoValues:
             if useCallOptionData:
-                for call_option in self.call_option_data:
-                    r_index = int(call_option[0])-1
-                    greek_value = float(call_option[6])
-
-                    if r_index < 30:
-                        s1 = float(self.interest_rate_data[r_index])
-                        s2 = float(self.interest_rate_data[r_index+1])
-                        greek_value = greek_value*(s2-s1) # calculate delta effect relative to option price
-                        # print(r_index,s1,s2, greek_value, float(call_option[1]))
-                        temp.append(greek_value+float(call_option[1]))
+                for call_option_file in self.call_option_data:
+                    for call_option in call_option_file:
+                        r_index = int(call_option[0])-1
+                        greek_value = float(call_option[6])
+                        if r_index < 30:
+                            s1 = float(self.interest_rate_data[r_index])
+                            s2 = float(self.interest_rate_data[r_index+1])
+                            greek_value = greek_value*(s2-s1) # calculate delta effect relative to option price
+                            tempRho.append(greek_value+float(call_option[1]))
+                        else:
+                            tempRho.append(0)
+                    temp.append(tempRho)
+                    tempRho = []
             else:
-                for put_option in self.put_option_data:
-                    r_index = int(put_option[0])-1
-                    greek_value = float(put_option[6])
-
-                    if r_index < 30:
-                        s1 = float(self.interest_rate_data[r_index])
-                        s2 = float(self.interest_rate_data[r_index+1])
-                        greek_value = greek_value*(s2-s1) # calculate delta effect relative to option price
-                        # print(r_index,s1,s2,gamma, float(put_option[1]))
-                        temp.append(greek_value+float(put_option[1]))
+                for put_option_file in self.put_option_data:
+                    for put_option in put_option_file:
+                        r_index = int(put_option[0])-1
+                        greek_value = float(put_option[6])
+                        if r_index < 30:
+                            s1 = float(self.interest_rate_data[r_index])
+                            s2 = float(self.interest_rate_data[r_index+1])
+                            greek_value = greek_value*(s2-s1) # calculate delta effect relative to option price
+                            tempRho.append(greek_value+float(put_option[1]))
+                        else:
+                            tempRho.append(0)
+                    temp.append(tempRho)
+                    tempRho = []
         return temp

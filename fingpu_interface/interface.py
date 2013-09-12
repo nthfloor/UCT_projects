@@ -53,9 +53,7 @@ class PlotFrame(wx.Frame):
 
         # initialise data
         self.option_price = []
-        self.time_span = []
-        for x in xrange(1,31):
-            self.time_span.append(x)
+        self.time_span = []        
 
         self.delta = []
         self.gamma = []
@@ -118,6 +116,7 @@ class PlotFrame(wx.Frame):
         self.callRadio = wx.RadioButton(self.panel, label="Call options", pos=(10, 10))
         self.putRadio = wx.RadioButton(self.panel, label="Put options", pos=(10, 30))
         self.spaceKeeper = wx.StaticText(self.panel, -1, '')
+        self.optionPriceCheck = wx.CheckBox(self.panel, label="Option Price", pos=(20, 20))
         self.deltaCheck = wx.CheckBox(self.panel, label="Delta", pos=(20, 20))
         self.gammaCheck = wx.CheckBox(self.panel, label="Gamma", pos=(20, 20))
         self.rhoCheck = wx.CheckBox(self.panel, label="Rho", pos=(20, 20))
@@ -126,6 +125,7 @@ class PlotFrame(wx.Frame):
 
         self.Bind(wx.EVT_RADIOBUTTON, self.onCallRadio, self.callRadio)
         self.Bind(wx.EVT_RADIOBUTTON, self.onPutRadio, self.putRadio)
+        self.Bind(wx.EVT_CHECKBOX, self.onOptionPrice, self.optionPriceCheck)
         self.Bind(wx.EVT_CHECKBOX, self.onDelta, self.deltaCheck)
         self.Bind(wx.EVT_CHECKBOX, self.onGamma, self.gammaCheck)
         self.Bind(wx.EVT_CHECKBOX, self.onRho, self.rhoCheck)
@@ -157,18 +157,18 @@ class PlotFrame(wx.Frame):
         self.vboxOptions.AddSpacer(10)
 
         self.optionsBorder = wx.StaticBoxSizer(wx.StaticBox(self.panel, -1, 'Options'), orient=wx.VERTICAL)
-        self.flexiOptions = wx.FlexGridSizer(8, 1, 3, 10)
+        self.flexiOptions = wx.FlexGridSizer(9, 1, 3, 10)
         self.flexiOptions.AddMany([(self.callRadio, 1, wx.EXPAND), (self.putRadio, 1, wx.EXPAND), (self.spaceKeeper), 
-            (self.deltaCheck, 1, wx.EXPAND), (self.gammaCheck, 1, wx.EXPAND), (self.rhoCheck, 1, wx.EXPAND), 
-            (self.thetaCheck, 1, wx.EXPAND), (self.vegaCheck, 1, wx.EXPAND)])
+            (self.optionPriceCheck, 1, wx.EXPAND), (self.deltaCheck, 1, wx.EXPAND), (self.gammaCheck, 1, wx.EXPAND), 
+            (self.rhoCheck, 1, wx.EXPAND), (self.thetaCheck, 1, wx.EXPAND), (self.vegaCheck, 1, wx.EXPAND)])
         self.optionsBorder.Add(self.flexiOptions, 1, wx.ALL, 5)
         self.vboxOptions.Add(self.optionsBorder, 2, flag=wx.ALIGN_LEFT|wx.ALL|wx.GROW)
 
         self.hboxMainBlock.Add(self.vboxOptions, 0, flag=flags)
         self.hboxMainBlock.Add(self.canvas, 1, flag=wx.ALIGN_RIGHT|wx.ALL|wx.ALIGN_CENTER_VERTICAL|wx.EXPAND)
-        self.sizer.Add(self.hboxMainBlock, 0, wx.ALL|wx.EXPAND)
+        self.sizer.Add(self.hboxMainBlock, 1, wx.ALL|wx.EXPAND)
 
-        self.sizer.Add(self.toolbar, 1, wx.ALL|wx.ALIGN_RIGHT)
+        self.sizer.Add(self.toolbar, 0, wx.ALL|wx.ALIGN_RIGHT)
         self.sizer.AddSpacer(1)
 
         self.canvas.Bind(wx.EVT_KEY_DOWN, self.onKeyEvent)
@@ -329,6 +329,7 @@ class PlotFrame(wx.Frame):
 
         if dlg.ShowModal() == wx.ID_OK:
             path = dlg.GetPath()
+            # this also involves reading in all the data
             self.fileReader.loadSettingsFile(path, thisdir)
             print('Opened settings file at %s' % path)
         else:
@@ -337,25 +338,16 @@ class PlotFrame(wx.Frame):
             dlg.Destroy()
             return
 
-        # read in all data(inputs & outputs)
-        self.fileReader.loadOutputFile('outputs_0.csv')
-        self.fileReader.loadInputFile('inputs_0.csv')
-
         # populate data
-        self.option_price = self.fileReader.getOptionPrice(self.callRadio.GetValue())
-
+        self.option_price = self.fileReader.getOptionPrice(self.callRadio.GetValue(), 
+            self.optionPriceCheck.IsChecked())
         self.delta = self.fileReader.getDeltaValues(self.callRadio.GetValue(), self.deltaCheck.IsChecked())
         self.gamma = self.fileReader.getGammaValues(self.callRadio.GetValue(), self.gammaCheck.IsChecked())
         self.vega = self.fileReader.getVegaValues(self.callRadio.GetValue(), self.vegaCheck.IsChecked())
         self.theta = self.fileReader.getThetaValues(self.callRadio.GetValue(), self.thetaCheck.IsChecked())
         self.rho = self.fileReader.getRhoValues(self.callRadio.GetValue(), self.rhoCheck.IsChecked())
 
-        if self.current_view == 0:
-            self.Plot_Data()
-        elif self.current_view == 1:
-            self.Plot_Data_advanced()
-        else:
-            self.Plot_Data_3D()
+        self.Plot_Data()
 
     def onExit(self,event=None):
         dlg = wx.MessageDialog(None, 'Are you sure to exit?', 'Confirm', wx.YES_NO|wx.NO_DEFAULT|wx.ICON_QUESTION)
@@ -365,7 +357,7 @@ class PlotFrame(wx.Frame):
 
     """ GUI event methods """
     def onCallRadio(self, event=None):
-        self.option_price = self.fileReader.getOptionPrice(self.callRadio.GetValue())
+        self.option_price = self.fileReader.getOptionPrice(self.callRadio.GetValue(), self.optionPriceCheck.IsChecked())
         self.delta = self.fileReader.getDeltaValues(self.callRadio.GetValue(), self.deltaCheck.IsChecked())
         self.gamma = self.fileReader.getGammaValues(self.callRadio.GetValue(), self.gammaCheck.IsChecked())
         self.vega = self.fileReader.getVegaValues(self.callRadio.GetValue(), self.vegaCheck.IsChecked())
@@ -374,13 +366,17 @@ class PlotFrame(wx.Frame):
         self.Plot_Data()
 
     def onPutRadio(self, event=None):
-        self.option_price = self.fileReader.getOptionPrice(self.callRadio.GetValue())
+        self.option_price = self.fileReader.getOptionPrice(self.callRadio.GetValue(), self.optionPriceCheck.IsChecked())
         self.delta = self.fileReader.getDeltaValues(self.callRadio.GetValue(), self.deltaCheck.IsChecked())
         self.gamma = self.fileReader.getGammaValues(self.callRadio.GetValue(), self.gammaCheck.IsChecked())
         self.vega = self.fileReader.getVegaValues(self.callRadio.GetValue(), self.vegaCheck.IsChecked())
         self.theta = self.fileReader.getThetaValues(self.callRadio.GetValue(), self.thetaCheck.IsChecked())
         self.rho = self.fileReader.getRhoValues(self.callRadio.GetValue(), self.rhoCheck.IsChecked())
         self.Plot_Data() 
+
+    def onOptionPrice(self, event=None):
+        self.option_price = self.fileReader.getOptionPrice(self.callRadio.GetValue(), self.optionPriceCheck.IsChecked())
+        self.Plot_Data()
 
     def onDelta(self, event=None):
         self.delta = self.fileReader.getDeltaValues(self.callRadio.GetValue(), self.deltaCheck.IsChecked())
@@ -416,49 +412,83 @@ class PlotFrame(wx.Frame):
 
     """ Graph plotting methods """
     def Plot_Data(self):
-        """ 2D graph plotter """
-        # plot graphs
-        self.fig.delaxes(self.axes)
-        self.axes = self.fig.add_subplot(111) # can use add_axes, but then nav-toolbar would not work
-        self.axes.grid(self.viewGrid)
-        # self.axes.set_title('Basic View')
+        if self.current_view == 1:
+            self.Plot_Data_advanced()
+        elif self.current_view == 2:
+            self.Plot_Data_3D()
+        else:
+            """ Basic 2D graph plotter """
+            self.fig.delaxes(self.axes)
+            self.axes.clear()
+            self.axes = self.fig.add_subplot(111) # can use add_axes, but then nav-toolbar would not work
+            self.axes.grid(self.viewGrid)
 
-        self.line1, = self.axes.plot(self.option_price, label="Option Price")
-        self.axes.plot(self.delta, label="Delta")
-        self.axes.plot(self.gamma, label="Gamma")
-        self.axes.plot(self.vega, label="Vega")
-        self.axes.plot(self.theta, label="Theta")
-        self.axes.plot(self.rho, label="Rho")
+            # plot graphs here
+            if len(self.option_price) > 0:
+                self.axes.plot(self.option_price[0], label="Option Price")
+            if len(self.delta) > 0:
+                self.axes.plot(self.delta[0], label="Delta")
+            if len(self.gamma) > 0:
+                self.axes.plot(self.gamma[0], label="Gamma")
+            if len(self.vega) > 0:
+                self.axes.plot(self.vega[0], label="Vega")
+            if len(self.theta) > 0:
+                self.axes.plot(self.theta[0], label="Theta")
+            if len(self.rho) > 0:
+                self.axes.plot(self.rho[0], label="Rho")
 
-        if self.viewLegend:
-            # Shink current axis by 15%
-            box = self.axes.get_position()
-            self.axes.set_position([box.x0, box.y0, box.width * 0.85, box.height])
+            if self.viewLegend:
+                # Shink current axis by 15%
+                box = self.axes.get_position()
+                self.axes.set_position([box.x0, box.y0, box.width * 0.85, box.height])
 
-            # Put a legend to the right of the current axis
-            self.axes.legend(loc='center left', bbox_to_anchor=(1, 0.5), prop={'size':8})
+                # Put a legend to the right of the current axis
+                self.axes.legend(loc='center left', bbox_to_anchor=(1, 0.5), prop={'size':8})
 
-        # set useblit True on gtkagg for enhanced performance
-        # self.span = SpanSelector(self.axes, self.onselect, 'horizontal', useblit=True, rectprops=dict(alpha=0.5, facecolor='red'))
-
-        self.canvas.draw()
+            self.canvas.draw()
 
     def Plot_Data_advanced(self):
         """ Advanced 2D plotter """
         # plot graphs
         self.fig.delaxes(self.axes)
+        self.axes.clear()
         self.axes = self.fig.add_subplot(211)
-        # self.axes.set_title('Advanced View')
         self.axes.grid(self.viewGrid)
 
-        self.line1, = self.axes.plot(self.option_price, label="Option Price")
+        if True:
+            if len(self.option_price) > 0:
+                self.line1, = self.axes.plot(self.option_price[0], label="Option Price")
+            if len(self.delta) > 0:
+                self.axes.plot(self.delta[0], label="Delta")
+            if len(self.gamma) > 0:
+                self.axes.plot(self.gamma[0], label="Gamma")
+            if len(self.vega) > 0:
+                self.axes.plot(self.vega[0], label="Vega")
+            if len(self.theta) > 0:
+                self.axes.plot(self.theta[0], label="Theta")
+            if len(self.rho) > 0:
+                self.axes.plot(self.rho[0], label="Rho")
 
         self.axes2 = self.fig.add_subplot(212)
+        self.axes2.clear()
         self.axes2.grid(self.viewGrid)
-        self.line2, = self.axes2.plot(self.option_price, label="Option Price")
+        if True:
+            if len(self.option_price) > 0:
+                self.line2, = self.axes2.plot(self.option_price[0], label="Option Price")
+            if len(self.delta) > 0:
+                self.axes2.plot(self.delta[0], label="Delta")
+            if len(self.gamma) > 0:
+                self.axes2.plot(self.gamma[0], label="Gamma")
+            if len(self.vega) > 0:
+                self.axes2.plot(self.vega[0], label="Vega")
+            if len(self.theta) > 0:
+                self.axes2.plot(self.theta[0], label="Theta")
+            if len(self.rho) > 0:
+                self.axes2.plot(self.rho[0], label="Rho")
+
 
         # set useblit True on gtkagg for enhanced performance
-        self.span = SpanSelector(self.axes, self.onselect, 'horizontal', useblit=True, rectprops=dict(alpha=0.5, facecolor='red'))
+        # self.span = SpanSelector(self.axes, self.onselect, 'horizontal', useblit=True, rectprops=dict(alpha=0.5, facecolor='red'))
 
         self.canvas.draw()
 
