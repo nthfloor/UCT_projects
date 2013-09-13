@@ -15,7 +15,7 @@ class Reader():
         self.call_option_data = []
         self.interest_rate_data = []
 
-    def loadSettingsFile(self, filename, path):
+    def loadSettingsFile(self, filename, path, statusBar):
         self.data_path = ''.join(path+'/')
         myfile = open(filename, "rb")
 
@@ -31,11 +31,13 @@ class Reader():
 
         # Read in all data for greeks
         for x in xrange(0, self.num_output_files):
-            print('reading in...outputs_'+str(x)+'.csv')
+            statusBar.SetStatusText('reading in...outputs_'+str(x)+'.csv')
             self.loadOutputFile('outputs_'+str(x)+'.csv')
 
-        print("reading in...inputs.csv")
+        statusBar.SetStatusText("reading in...inputs.csv")
         self.loadInputFile('inputs.csv')
+        statusBar.SetStatusText("Importing data complete.")
+        return self.time_span
 
     def loadOutputFile(self, filename):
         ifile = open(''.join(self.data_path+filename), "rb")

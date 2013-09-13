@@ -10,15 +10,16 @@ from __future__ import division, print_function
 
 import wx
 import os
-import numpy
+# import numpy
 import matplotlib
-import csvReader
+import csvReader, floatSlider
 
 matplotlib.use('WXAgg')
 from matplotlib.backends.backend_wxagg import FigureCanvasWxAgg as FigCanvas, NavigationToolbar2WxAgg as NavigationToolbar
 from matplotlib.figure import Figure
 from matplotlib.widgets import SpanSelector
 from mpl_toolkits.mplot3d import axes3d
+from matplotlib import cm
 
 
 class PlotFrame(wx.Frame):
@@ -49,6 +50,7 @@ class PlotFrame(wx.Frame):
         self.fileReader = csvReader.Reader()
         self.viewLegend = False
         self.viewGrid = True
+        self.viewFill = False
         self.current_view = 0
 
         # initialise data
@@ -71,18 +73,19 @@ class PlotFrame(wx.Frame):
     def onselect(self, xmin, xmax):
         print("onselect", xmin, xmax)
         indmin = int(xmin)
-        # indmax = numpy.searchsorted(self.time_span, (xmin, xmax)) # TODO here
+        # indmax = numpy.searchsorted(self.time_span, (xmin, xmax))
         indmax = min(len(self.option_price)-1, int(xmax))
 
         thisx = self.time_span[indmin:indmax]
-        thisy = self.option_price[indmin:indmax]
+        thisy = self.option_price[0][indmin:indmax]
 
+        print(thisx)
+        print(thisy)
         thisy = map(float, thisy)
-        # print(thisy)
 
         self.line1.set_data(thisx, thisy)
-        self.axes.set_xlim(thisx[0], thisx[-1])
-        self.axes.set_ylim(thisy[0], thisy[-1])
+        self.axes2.set_xlim(thisx[0], thisx[-1])
+        self.axes2.set_ylim(thisy[0], thisy[-1])
         self.canvas.draw()
 
     def Build_Panel(self):
@@ -95,17 +98,21 @@ class PlotFrame(wx.Frame):
 
         # setup slider-widgets for controlling GUI
         self.stockSlider_label = wx.StaticText(self.panel, -1, "Stock Price: ")
-        self.stockSlider = wx.Slider(self.panel, value=0, minValue=-5, maxValue=5, 
-            pos=(20, 20), size=(100,-1), style=wx.SL_HORIZONTAL)
+        self.stockSlider = wx.Slider(self.panel, value=35, minValue=7, maxValue=63, 
+            pos=(20, 20), size=(100,-1), style=wx.SL_HORIZONTAL|wx.SL_AUTOTICKS|wx.SL_LABELS)
+        self.stockSlider.SetTickFreq(9, 7)
         self.rateSlider_label = wx.StaticText(self.panel, -1, "Interest Rate: ")
-        self.rateSlider = wx.Slider(self.panel, value=0, minValue=-5, maxValue=5, 
+        self.rateSlider = floatSlider.FloatSlider(self.panel, value=0.005, minValue=0.001, maxValue=0.009, 
             pos=(20, 20), size=(100,-1), style=wx.SL_HORIZONTAL)
+        self.rateSlider.SetTickFreq(9, 0.001)
         self.volatilSlider_label = wx.StaticText(self.panel, -1, "Volatility: ")
-        self.volatilSlider = wx.Slider(self.panel, value=0, minValue=-5, maxValue=5, 
+        self.volatilSlider = wx.Slider(self.panel, value=0.02, minValue=0.004, maxValue=0.036, 
             pos=(20, 20), size=(100,-1), style=wx.SL_HORIZONTAL)
+        self.volatilSlider.SetTickFreq(9, 0.004)
         self.timeStepSlider_label = wx.StaticText(self.panel, -1, "Time Step: ")
-        self.timeStepSlider = wx.Slider(self.panel, value=0, minValue=-5, maxValue=5, 
+        self.timeStepSlider = wx.Slider(self.panel, value=0.01, minValue=0.002, maxValue=0.018, 
             pos=(20, 20), size=(100,-1), style=wx.SL_HORIZONTAL)
+        self.timeStepSlider.SetTickFreq(9, 0.002)
 
         self.Bind(wx.EVT_COMMAND_SCROLL_THUMBTRACK, self.onStockSlider, self.stockSlider)
         self.Bind(wx.EVT_COMMAND_SCROLL_THUMBTRACK, self.onRateSlider, self.rateSlider)
@@ -193,6 +200,7 @@ class PlotFrame(wx.Frame):
         MENU_ADVANCE = wx.NewId()
         MENU_LEGEND = wx.NewId()
         MENU_3D = wx.NewId()
+        MENU_FILL = wx.NewId()
 
         menuBar = wx.MenuBar()
 
@@ -215,7 +223,7 @@ class PlotFrame(wx.Frame):
         f1 = wx.Menu()
         f1.Append(MENU_BASIC, '&Basic', "Basic View(2D)")
         f1.Append(MENU_ADVANCE, '&Advanced', "Advanced View(2D)")
-        f1.Append(MENU_ADVANCE, 'A&dvanced3D', "Advanced View(3D)")
+        f1.Append(MENU_3D, 'A&dvanced3D', "Advanced View(3D)")
         menuBar.Append(f1, "&View")
 
         f2 = wx.Menu()
@@ -223,7 +231,9 @@ class PlotFrame(wx.Frame):
         f2.AppendItem(viewGridItem)
         viewLegendItem = wx.MenuItem(f2, MENU_LEGEND, 'View &Legend\tCtrl+L')
         f2.AppendItem(viewLegendItem)
-        menuBar.Append(f2, "&Options")
+        viewFillItem = wx.MenuItem(f2, MENU_FILL, 'View &Fill\tCtrl+F')
+        f2.AppendItem(viewFillItem)
+        menuBar.Append(f2, "&Tools")
 
         f3 = wx.Menu()
         f3.Append(MENU_HELP, "Quick Reference",  "Quick Reference")
@@ -244,8 +254,16 @@ class PlotFrame(wx.Frame):
         self.Bind(wx.EVT_MENU, self.onBasicView,    id=MENU_BASIC)
         self.Bind(wx.EVT_MENU, self.onAdvancedView, id=MENU_ADVANCE)
         self.Bind(wx.EVT_MENU, self.onAdvanced3DView, id=MENU_3D)
+        self.Bind(wx.EVT_MENU, self.onViewFill, id=MENU_FILL)
 
     """ Menu event methods """
+    def onViewFill(self, event=None):
+        if self.viewFill:
+            self.viewFill = False
+        else:
+            self.viewFill = True
+        self.Plot_Data()
+
     def onViewLegend(self, event=None):
         if self.viewLegend:
             self.viewLegend = False
@@ -259,11 +277,11 @@ class PlotFrame(wx.Frame):
 
     def onAdvancedView(self, event=None):
         self.current_view = 1
-        self.Plot_Data_advanced()
+        self.Plot_Data()
 
     def onAdvanced3DView(self, event=None):
         self.current_view = 2
-        self.Plot_Data_3D()
+        self.Plot_Data()
 
     def onPrinterSetup(self,event=None):
         self.canvas.Printer_Setup(event=event)
@@ -330,7 +348,7 @@ class PlotFrame(wx.Frame):
         if dlg.ShowModal() == wx.ID_OK:
             path = dlg.GetPath()
             # this also involves reading in all the data
-            self.fileReader.loadSettingsFile(path, thisdir)
+            self.time_span = self.fileReader.loadSettingsFile(path, thisdir, self.statusbar)
             print('Opened settings file at %s' % path)
         else:
             dlg = wx.MessageDialog(self, "Failed to import the correct settings file.", "Complication", wx.OK | wx.ICON_ERROR)
@@ -399,6 +417,7 @@ class PlotFrame(wx.Frame):
         self.Plot_Data()
 
     def onStockSlider(self, event=None):
+        self.statusbar.SetStatusText(str(self.stockSlider.GetValue()))
         self.Plot_Data()
 
     def onRateSlider(self, event=None):
@@ -416,7 +435,7 @@ class PlotFrame(wx.Frame):
             self.Plot_Data_advanced()
         elif self.current_view == 2:
             self.Plot_Data_3D()
-        else:
+        elif self.current_view == 0:
             """ Basic 2D graph plotter """
             self.fig.delaxes(self.axes)
             self.axes.clear()
@@ -427,7 +446,10 @@ class PlotFrame(wx.Frame):
             if len(self.option_price) > 0:
                 self.axes.plot(self.option_price[0], label="Option Price")
             if len(self.delta) > 0:
-                self.axes.plot(self.delta[0], label="Delta")
+                if self.viewFill:
+                    self.axes.fill(self.option_price[0], self.delta[0], label="Option Price")
+                else:
+                    self.axes.plot(self.delta[0], label="Delta")
             if len(self.gamma) > 0:
                 self.axes.plot(self.gamma[0], label="Gamma")
             if len(self.vega) > 0:
@@ -457,7 +479,7 @@ class PlotFrame(wx.Frame):
 
         if True:
             if len(self.option_price) > 0:
-                self.line1, = self.axes.plot(self.option_price[0], label="Option Price")
+                self.axes.plot(self.option_price[0], label="Option Price")
             if len(self.delta) > 0:
                 self.axes.plot(self.delta[0], label="Delta")
             if len(self.gamma) > 0:
@@ -474,39 +496,61 @@ class PlotFrame(wx.Frame):
         self.axes2.grid(self.viewGrid)
         if True:
             if len(self.option_price) > 0:
-                self.line2, = self.axes2.plot(self.option_price[0], label="Option Price")
+                self.line1, = self.axes2.plot(self.option_price[0], label="Option Price")
             if len(self.delta) > 0:
-                self.axes2.plot(self.delta[0], label="Delta")
+                self.line2, = self.axes2.plot(self.delta[0], label="Delta")
             if len(self.gamma) > 0:
-                self.axes2.plot(self.gamma[0], label="Gamma")
+                self.line3, = self.axes2.plot(self.gamma[0], label="Gamma")
             if len(self.vega) > 0:
-                self.axes2.plot(self.vega[0], label="Vega")
+                self.line4, = self.axes2.plot(self.vega[0], label="Vega")
             if len(self.theta) > 0:
-                self.axes2.plot(self.theta[0], label="Theta")
+                self.line5, = self.axes2.plot(self.theta[0], label="Theta")
             if len(self.rho) > 0:
-                self.axes2.plot(self.rho[0], label="Rho")
+                self.line6, = self.axes2.plot(self.rho[0], label="Rho")
 
+        if self.viewLegend:
+            # Shink current axis by 15%
+            box = self.axes.get_position()
+            self.axes.set_position([box.x0, box.y0, box.width * 0.85, box.height])
+            # Put a legend to the right of the current axis
+            self.axes.legend(loc='center left', bbox_to_anchor=(1, 0.5), prop={'size':8})
 
         # set useblit True on gtkagg for enhanced performance
-        # self.span = SpanSelector(self.axes, self.onselect, 'horizontal', useblit=True, rectprops=dict(alpha=0.5, facecolor='red'))
+        self.span = SpanSelector(self.axes, self.onselect, 'horizontal', useblit=True, rectprops=dict(alpha=0.5, facecolor='red'))
 
         self.canvas.draw()
 
     def Plot_Data_3D(self):
         """ Advanced 3D plotter """
         # plot graphs
+        self.fig.delaxes(self.axes)
         self.axes.clear()
         self.axes = self.fig.add_subplot(111, projection='3d') # can use add_axes, but then nav-toolbar would not work
         self.axes.grid(self.viewGrid)
 
-        self.line1, = self.axes.contour(self.option_price, label="Option Price") # wireframes/surface/contour plot
+        print(self.option_price[0])
+
+        self.axes.plot_surface(self.option_price[0], self.time_span, [1, 2, 3, 4, 5, 6, 7, 8, 9],
+            rstride=1, cstride=1, cmap=cm.coolwarm, linewidth=0, antialiased=False)
         # ax.plot_wireframe(X, Y, Z, rstride=10, cstride=10)
         # self.axes.plot(delta, label="Delta")
         # print(self.option_price)
-        self.axes.plot(self.gamma, label="Gamma")
-        self.axes.plot(self.vega, label="Vega")
-        self.axes.plot(self.theta, label="Theta")
-        self.axes.plot(self.rho, label="Rho")
+        # self.axes.plot(self.gamma, label="Gamma")
+        # self.axes.plot(self.vega, label="Vega")
+        # self.axes.plot(self.theta, label="Theta")
+        # self.axes.plot(self.rho, label="Rho")
+        # X, Y, Z = axes3d.get_test_data(0.05)
+        # self.axes.plot_surface(X, Y, Z, rstride=8, cstride=8, alpha=0.3)
+        # cset = self.axes.contour(X, Y, Z, zdir='z', offset=-100, cmap=cm.coolwarm)
+        # cset = self.axes.contour(X, Y, Z, zdir='x', offset=-40, cmap=cm.coolwarm)
+        # cset = self.axes.contour(X, Y, Z, zdir='y', offset=40, cmap=cm.coolwarm)
+
+        self.axes.set_xlabel('X')
+        # self.axes.set_xlim(-40, 40)
+        self.axes.set_ylabel('Y')
+        # self.axes.set_ylim(-40, 40)
+        self.axes.set_zlabel('Z')
+        # self.axes.set_zlim(-100, 100)
 
         if self.viewLegend:
             self.axes.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
