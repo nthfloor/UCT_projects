@@ -25,16 +25,14 @@ class Reader():
         # print(self.num_output_files)
 
         self.time_span = []
-        for x in xrange(1,31*self.num_output_files):
+        for x in xrange(1,32):
             self.time_span.append(x)
         myfile.close()
 
         # Read in all data for greeks
         for x in xrange(0, self.num_output_files):
-            statusBar.SetStatusText('reading in...outputs_'+str(x)+'.csv')
             self.loadOutputFile('outputs_'+str(x)+'.csv')
 
-        statusBar.SetStatusText("reading in...inputs.csv")
         self.loadInputFile('inputs.csv')
         statusBar.SetStatusText("Importing data complete.")
         return self.time_span

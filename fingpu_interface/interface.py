@@ -10,9 +10,9 @@ from __future__ import division, print_function
 
 import wx
 import os
-# import numpy
+import numpy
 import matplotlib
-import csvReader, floatSlider
+import csvReader
 
 matplotlib.use('WXAgg')
 from matplotlib.backends.backend_wxagg import FigureCanvasWxAgg as FigCanvas, NavigationToolbar2WxAgg as NavigationToolbar
@@ -55,7 +55,7 @@ class PlotFrame(wx.Frame):
 
         # initialise data
         self.option_price = []
-        self.time_span = []        
+        self.time_span = []      
 
         self.delta = []
         self.gamma = []
@@ -71,21 +71,24 @@ class PlotFrame(wx.Frame):
 
     # on span-selection of graph TODO still
     def onselect(self, xmin, xmax):
-        print("onselect", xmin, xmax)
+        print("onselect")
+        t = numpy.arange(0, 31, 1)
+        p = numpy.array(map(float, self.option_price[0]))
         indmin = int(xmin)
-        # indmax = numpy.searchsorted(self.time_span, (xmin, xmax))
-        indmax = min(len(self.option_price)-1, int(xmax))
+        indmax = numpy.searchsorted(t, (xmin, xmax))
+        indmax = min(len(p)-1, int(xmax))
 
-        thisx = self.time_span[indmin:indmax]
-        thisy = self.option_price[0][indmin:indmax]
+        thisx = t[indmin:indmax]
+        thisy = p[indmin:indmax]
 
         print(thisx)
         print(thisy)
-        thisy = map(float, thisy)
+        # thisy = map(float, thisy)
 
+        print(self.line1)
         self.line1.set_data(thisx, thisy)
-        self.axes2.set_xlim(thisx[0], thisx[-1])
-        self.axes2.set_ylim(thisy[0], thisy[-1])
+        self.axes2.set_xlim(thisx[0]-1, thisx[-1]+1)
+        self.axes2.set_ylim(thisy[0]-300, thisy[-1]+300)
         self.canvas.draw()
 
     def Build_Panel(self):
@@ -98,26 +101,26 @@ class PlotFrame(wx.Frame):
 
         # setup slider-widgets for controlling GUI
         self.stockSlider_label = wx.StaticText(self.panel, -1, "Stock Price: ")
-        self.stockSlider = wx.Slider(self.panel, value=35, minValue=7, maxValue=63, 
-            pos=(20, 20), size=(100,-1), style=wx.SL_HORIZONTAL|wx.SL_AUTOTICKS|wx.SL_LABELS)
-        self.stockSlider.SetTickFreq(9, 7)
+        self.stockSlider = wx.Slider(self.panel, value=5, minValue=1, maxValue=9, 
+            pos=(20, 20), size=(100,-1), style=wx.SL_HORIZONTAL|wx.SL_AUTOTICKS)
+        self.stockSlider.SetTickFreq(9, 1)
         self.rateSlider_label = wx.StaticText(self.panel, -1, "Interest Rate: ")
-        self.rateSlider = floatSlider.FloatSlider(self.panel, value=0.005, minValue=0.001, maxValue=0.009, 
-            pos=(20, 20), size=(100,-1), style=wx.SL_HORIZONTAL)
-        self.rateSlider.SetTickFreq(9, 0.001)
+        self.rateSlider = wx.Slider(self.panel, value=5, minValue=1, maxValue=9, 
+            pos=(20, 20), size=(100,-1), style=wx.SL_HORIZONTAL|wx.SL_AUTOTICKS)
+        self.rateSlider.SetTickFreq(9, 1)
         self.volatilSlider_label = wx.StaticText(self.panel, -1, "Volatility: ")
-        self.volatilSlider = wx.Slider(self.panel, value=0.02, minValue=0.004, maxValue=0.036, 
-            pos=(20, 20), size=(100,-1), style=wx.SL_HORIZONTAL)
-        self.volatilSlider.SetTickFreq(9, 0.004)
+        self.volatilSlider = wx.Slider(self.panel, value=5, minValue=1, maxValue=9, 
+            pos=(20, 20), size=(100,-1), style=wx.SL_HORIZONTAL|wx.SL_AUTOTICKS)
+        self.volatilSlider.SetTickFreq(9, 1)
         self.timeStepSlider_label = wx.StaticText(self.panel, -1, "Time Step: ")
-        self.timeStepSlider = wx.Slider(self.panel, value=0.01, minValue=0.002, maxValue=0.018, 
-            pos=(20, 20), size=(100,-1), style=wx.SL_HORIZONTAL)
-        self.timeStepSlider.SetTickFreq(9, 0.002)
+        self.timeStepSlider = wx.Slider(self.panel, value=5, minValue=1, maxValue=9, 
+            pos=(20, 20), size=(100,-1), style=wx.SL_HORIZONTAL|wx.SL_AUTOTICKS)
+        self.timeStepSlider.SetTickFreq(9, 1)
 
-        self.Bind(wx.EVT_COMMAND_SCROLL_THUMBTRACK, self.onStockSlider, self.stockSlider)
-        self.Bind(wx.EVT_COMMAND_SCROLL_THUMBTRACK, self.onRateSlider, self.rateSlider)
-        self.Bind(wx.EVT_COMMAND_SCROLL_THUMBTRACK, self.onVolatilSlider, self.volatilSlider)
-        self.Bind(wx.EVT_COMMAND_SCROLL_THUMBTRACK, self.ontimeStepSlider, self.timeStepSlider)        
+        self.Bind(wx.EVT_SLIDER, self.onStockSlider, self.stockSlider)
+        self.Bind(wx.EVT_SLIDER, self.onRateSlider, self.rateSlider)
+        self.Bind(wx.EVT_SLIDER, self.onVolatilSlider, self.volatilSlider)
+        self.Bind(wx.EVT_SLIDER, self.ontimeStepSlider, self.timeStepSlider)        
 
         # setup options-widgets for controlling graphs
         self.callRadio = wx.RadioButton(self.panel, label="Call options", pos=(10, 10))
@@ -357,8 +360,7 @@ class PlotFrame(wx.Frame):
             return
 
         # populate data
-        self.option_price = self.fileReader.getOptionPrice(self.callRadio.GetValue(), 
-            self.optionPriceCheck.IsChecked())
+        self.option_price = self.fileReader.getOptionPrice(self.callRadio.GetValue(), self.optionPriceCheck.IsChecked())
         self.delta = self.fileReader.getDeltaValues(self.callRadio.GetValue(), self.deltaCheck.IsChecked())
         self.gamma = self.fileReader.getGammaValues(self.callRadio.GetValue(), self.gammaCheck.IsChecked())
         self.vega = self.fileReader.getVegaValues(self.callRadio.GetValue(), self.vegaCheck.IsChecked())
@@ -417,22 +419,111 @@ class PlotFrame(wx.Frame):
         self.Plot_Data()
 
     def onStockSlider(self, event=None):
-        self.statusbar.SetStatusText(str(self.stockSlider.GetValue()))
-        self.Plot_Data()
+        temp = 0
+        if self.stockSlider.GetValue() == 1:
+            temp = 7
+        elif self.stockSlider.GetValue() == 2:
+            temp = 14
+        elif self.stockSlider.GetValue() == 3:
+            temp = 21
+        elif self.stockSlider.GetValue() == 4:
+            temp = 28
+        elif self.stockSlider.GetValue() == 5:
+            temp = 35
+        elif self.stockSlider.GetValue() == 6:
+            temp = 42
+        elif self.stockSlider.GetValue() == 7:
+            temp = 49
+        elif self.stockSlider.GetValue() == 8:
+            temp = 56
+        elif self.stockSlider.GetValue() == 9:
+            temp = 63
+
+        self.statusbar.SetStatusText("Stock price bump: "+str(temp))
+        # print(self.stockSlider.GetValue()-1)
+        self.bump = self.stockSlider.GetValue()-1
+        self.Plot_Data(self.stockSlider.GetValue()-1)
 
     def onRateSlider(self, event=None):
-        self.Plot_Data()
+        temp = 0
+        if self.rateSlider.GetValue() == 1:
+            temp = 0.001
+        elif self.rateSlider.GetValue() == 2:
+            temp = 0.002
+        elif self.rateSlider.GetValue() == 3:
+            temp = 0.003
+        elif self.rateSlider.GetValue() == 4:
+            temp = 0.004
+        elif self.rateSlider.GetValue() == 5:
+            temp = 0.005
+        elif self.rateSlider.GetValue() == 6:
+            temp = 0.006
+        elif self.rateSlider.GetValue() == 7:
+            temp = 0.007
+        elif self.rateSlider.GetValue() == 8:
+            temp = 0.008
+        elif self.rateSlider.GetValue() == 9:
+            temp = 0.009
+
+        self.statusbar.SetStatusText("Interest Rate bump: "+str(temp))
+        # print(self.stockSlider.GetValue()-1)
+        self.Plot_Data(self.rateSlider.GetValue()-1)
 
     def onVolatilSlider(self, event=None):
-        self.Plot_Data()
+        temp = 0
+        if self.volatilSlider.GetValue() == 1:
+            temp = 0.004
+        elif self.volatilSlider.GetValue() == 2:
+            temp = 0.008
+        elif self.volatilSlider.GetValue() == 3:
+            temp = 0.012
+        elif self.volatilSlider.GetValue() == 4:
+            temp = 0.016
+        elif self.volatilSlider.GetValue() == 5:
+            temp = 0.02
+        elif self.volatilSlider.GetValue() == 6:
+            temp = 0.024
+        elif self.volatilSlider.GetValue() == 7:
+            temp = 0.028
+        elif self.volatilSlider.GetValue() == 8:
+            temp = 0.032
+        elif self.volatilSlider.GetValue() == 9:
+            temp = 0.036
+
+        self.statusbar.SetStatusText("Volatility bump: "+str(temp))
+        # print(self.stockSlider.GetValue()-1)
+        self.Plot_Data(self.volatilSlider.GetValue()-1)
 
     def ontimeStepSlider(self, event=None):
+        temp = 0
+        if self.timeStepSlider.GetValue() == 1:
+            temp = 0.002
+        elif self.timeStepSlider.GetValue() == 2:
+            temp = 0.004
+        elif self.timeStepSlider.GetValue() == 3:
+            temp = 0.006
+        elif self.timeStepSlider.GetValue() == 4:
+            temp = 0.08
+        elif self.timeStepSlider.GetValue() == 5:
+            temp = 0.01
+        elif self.timeStepSlider.GetValue() == 6:
+            temp = 0.012
+        elif self.timeStepSlider.GetValue() == 7:
+            temp = 0.014
+        elif self.timeStepSlider.GetValue() == 8:
+            temp = 0.016
+        elif self.timeStepSlider.GetValue() == 9:
+            temp = 0.018
+
+        self.statusbar.SetStatusText("Time step bump: "+str(temp))
+        # print(self.stockSlider.GetValue()-1)
+        self.Plot_Data(self.timeStepSlider.GetValue()-1)
         self.Plot_Data()
 
     """ Graph plotting methods """
-    def Plot_Data(self):
+    def Plot_Data(self, bump=0):
         if self.current_view == 1:
-            self.Plot_Data_advanced()
+            self.Plot_Data_advanced(bump)
         elif self.current_view == 2:
             self.Plot_Data_3D()
         elif self.current_view == 0:
@@ -443,33 +534,59 @@ class PlotFrame(wx.Frame):
             self.axes.grid(self.viewGrid)
 
             # plot graphs here
+            t = numpy.arange(0, 31, 1)
+            p = []
+            if self.viewFill:
+                p = numpy.array(map(float, self.option_price[bump]))
             if len(self.option_price) > 0:
-                self.axes.plot(self.option_price[0], label="Option Price")
+                self.axes.plot(t, self.option_price[bump], label="Option Price")
             if len(self.delta) > 0:
                 if self.viewFill:
-                    self.axes.fill(self.option_price[0], self.delta[0], label="Option Price")
+                    s = numpy.array(self.delta[bump])
+                    self.axes.fill_between(t, p, s, where=s>=p, facecolor='red', interpolate=True)
+                    self.axes.fill_between(t, p, s, where=s<=p, facecolor='green', interpolate=True)
                 else:
-                    self.axes.plot(self.delta[0], label="Delta")
+                    self.axes.plot(self.delta[bump], label="Delta")
             if len(self.gamma) > 0:
-                self.axes.plot(self.gamma[0], label="Gamma")
+                if self.viewFill:
+                    s = numpy.array(self.gamma[bump])
+                    self.axes.fill_between(t, p, s, where=s>=p, facecolor='red', interpolate=True)
+                    self.axes.fill_between(t, p, s, where=s<=p, facecolor='cyan', interpolate=True)
+                else:
+                    self.axes.plot(self.gamma[bump], label="Gamma")
             if len(self.vega) > 0:
-                self.axes.plot(self.vega[0], label="Vega")
+                if self.viewFill:
+                    s = numpy.array(self.vega[bump])
+                    self.axes.fill_between(t, p, s, where=s>=p, facecolor='red', interpolate=True)
+                    self.axes.fill_between(t, p, s, where=s<=p, facecolor='yellow', interpolate=True)
+                else:
+                    self.axes.plot(self.vega[bump], label="Vega")
             if len(self.theta) > 0:
-                self.axes.plot(self.theta[0], label="Theta")
+                if self.viewFill:
+                    s = numpy.array(self.theta[bump])
+                    self.axes.fill_between(t, p, s, where=s>=p, facecolor='red', interpolate=True)
+                    self.axes.fill_between(t, p, s, where=s<=p, facecolor='blue', interpolate=True)
+                else:
+                    self.axes.plot(t, self.theta[bump], label="Theta")
             if len(self.rho) > 0:
-                self.axes.plot(self.rho[0], label="Rho")
+                if self.viewFill:
+                    s = numpy.array(self.rho[bump])
+                    self.axes.fill_between(t, p, s, where=s>=p, facecolor='red', interpolate=True)
+                    self.axes.fill_between(t, p, s, where=s<=p, facecolor='white', interpolate=True)
+                else:
+                    self.axes.plot(t, self.rho[bump], label="Rho")
 
             if self.viewLegend:
                 # Shink current axis by 15%
                 box = self.axes.get_position()
-                self.axes.set_position([box.x0, box.y0, box.width * 0.85, box.height])
+                self.axes.set_position([box.x0, box.y0, box.width * 0.88, box.height])
 
                 # Put a legend to the right of the current axis
                 self.axes.legend(loc='center left', bbox_to_anchor=(1, 0.5), prop={'size':8})
 
             self.canvas.draw()
 
-    def Plot_Data_advanced(self):
+    def Plot_Data_advanced(self, bump=0):
         """ Advanced 2D plotter """
         # plot graphs
         self.fig.delaxes(self.axes)
@@ -477,36 +594,90 @@ class PlotFrame(wx.Frame):
         self.axes = self.fig.add_subplot(211)
         self.axes.grid(self.viewGrid)
 
+        t = numpy.arange(0, 31, 1)
+        p = []
+        if self.viewFill:
+            p = numpy.array(map(float, self.option_price[bump]))
         if True:
             if len(self.option_price) > 0:
-                self.axes.plot(self.option_price[0], label="Option Price")
+                self.axes.plot(t, self.option_price[bump], label="Option Price")
             if len(self.delta) > 0:
-                self.axes.plot(self.delta[0], label="Delta")
+                if self.viewFill:
+                    s = numpy.array(self.delta[bump])
+                    self.axes.fill_between(t, p, s, where=s>=p, facecolor='red', interpolate=True)
+                    self.axes.fill_between(t, p, s, where=s<=p, facecolor='green', interpolate=True)
+                else:
+                    self.axes.plot(self.delta[bump], label="Delta")
             if len(self.gamma) > 0:
-                self.axes.plot(self.gamma[0], label="Gamma")
+                if self.viewFill:
+                    s = numpy.array(self.gamma[bump])
+                    self.axes.fill_between(t, p, s, where=s>=p, facecolor='red', interpolate=True)
+                    self.axes.fill_between(t, p, s, where=s<=p, facecolor='cyan', interpolate=True)
+                else:
+                    self.axes.plot(self.gamma[bump], label="Gamma")
             if len(self.vega) > 0:
-                self.axes.plot(self.vega[0], label="Vega")
+                if self.viewFill:
+                    s = numpy.array(self.vega[bump])
+                    self.axes.fill_between(t, p, s, where=s>=p, facecolor='red', interpolate=True)
+                    self.axes.fill_between(t, p, s, where=s<=p, facecolor='yellow', interpolate=True)
+                else:
+                    self.axes.plot(self.vega[bump], label="Vega")
             if len(self.theta) > 0:
-                self.axes.plot(self.theta[0], label="Theta")
+                if self.viewFill:
+                    s = numpy.array(self.theta[bump])
+                    self.axes.fill_between(t, p, s, where=s>=p, facecolor='red', interpolate=True)
+                    self.axes.fill_between(t, p, s, where=s<=p, facecolor='blue', interpolate=True)
+                else:
+                    self.axes.plot(t, self.theta[bump], label="Theta")
             if len(self.rho) > 0:
-                self.axes.plot(self.rho[0], label="Rho")
+                if self.viewFill:
+                    s = numpy.array(self.rho[bump])
+                    self.axes.fill_between(t, p, s, where=s>=p, facecolor='red', interpolate=True)
+                    self.axes.fill_between(t, p, s, where=s<=p, facecolor='white', interpolate=True)
+                else:
+                    self.axes.plot(t, self.rho[bump], label="Rho")
 
         self.axes2 = self.fig.add_subplot(212)
         self.axes2.clear()
         self.axes2.grid(self.viewGrid)
         if True:
             if len(self.option_price) > 0:
-                self.line1, = self.axes2.plot(self.option_price[0], label="Option Price")
+                self.line1, = self.axes2.plot(t, self.option_price[bump], label="Option Price")
             if len(self.delta) > 0:
-                self.line2, = self.axes2.plot(self.delta[0], label="Delta")
+                if self.viewFill:
+                    s = numpy.array(self.delta[bump])
+                    self.line2 = self.axes2.fill_between(t, p, s, where=s>=p, facecolor='red', interpolate=True)
+                    self.line2 = self.axes2.fill_between(t, p, s, where=s<=p, facecolor='green', interpolate=True)
+                else:
+                    self.line2 = self.axes2.plot(self.delta[bump], label="Delta")
             if len(self.gamma) > 0:
-                self.line3, = self.axes2.plot(self.gamma[0], label="Gamma")
+                if self.viewFill:
+                    s = numpy.array(self.gamma[bump])
+                    self.line3 = self.axes2.fill_between(t, p, s, where=s>=p, facecolor='red', interpolate=True)
+                    self.line3 = self.axes2.fill_between(t, p, s, where=s<=p, facecolor='cyan', interpolate=True)
+                else:
+                    self.line3 = self.axes.plot(self.gamma[bump], label="Gamma")
             if len(self.vega) > 0:
-                self.line4, = self.axes2.plot(self.vega[0], label="Vega")
+                if self.viewFill:
+                    s = numpy.array(self.vega[bump])
+                    self.line4 = self.axes2.fill_between(t, p, s, where=s>=p, facecolor='red', interpolate=True)
+                    self.line4 = self.axes2.fill_between(t, p, s, where=s<=p, facecolor='yellow', interpolate=True)
+                else:
+                    self.line4 = self.axes2.plot(self.vega[bump], label="Vega")
             if len(self.theta) > 0:
-                self.line5, = self.axes2.plot(self.theta[0], label="Theta")
+                if self.viewFill:
+                    s = numpy.array(self.theta[bump])
+                    self.line5 = self.axes2.fill_between(t, p, s, where=s>=p, facecolor='red', interpolate=True)
+                    self.line5 = self.axes2.fill_between(t, p, s, where=s<=p, facecolor='blue', interpolate=True)
+                else:
+                    self.line5 = self.axes2.plot(t, self.theta[bump], label="Theta")
             if len(self.rho) > 0:
-                self.line6, = self.axes2.plot(self.rho[0], label="Rho")
+                if self.viewFill:
+                    s = numpy.array(self.rho[bump])
+                    self.line6 = self.axes2.fill_between(t, p, s, where=s>=p, facecolor='red', interpolate=True)
+                    self.line6 = self.axes2.fill_between(t, p, s, where=s<=p, facecolor='white', interpolate=True)
+                else:
+                    self.line6 = self.axes2.plot(t, self.rho[bump], label="Rho")
 
         if self.viewLegend:
             # Shink current axis by 15%
@@ -528,10 +699,20 @@ class PlotFrame(wx.Frame):
         self.axes = self.fig.add_subplot(111, projection='3d') # can use add_axes, but then nav-toolbar would not work
         self.axes.grid(self.viewGrid)
 
-        print(self.option_price[0])
+        t = numpy.arange(0, 31, 1)
+        b = numpy.arange(0, 9, 1)
+        # p = map(float, self.option_price)
+        p = [[float(string) for string in inner] for inner in self.option_price]
+        Z2D, Y2D = numpy.meshgrid(b, t)
+        # Z2D = numpy.reshape(t,(len(X2D[:,0]),len(X2D[0,:])))
+        X2D = p
 
-        self.axes.plot_surface(self.option_price[0], self.time_span, [1, 2, 3, 4, 5, 6, 7, 8, 9],
-            rstride=1, cstride=1, cmap=cm.coolwarm, linewidth=0, antialiased=False)
+        self.axes.plot_surface(X2D, Y2D, Z2D) #, cmap=cm.coolwarm, rstride=1, cstride=1, linewidth=0, antialiased=False)
+        print(X2D, Y2D, Z2D)
+        cset = self.axes.contour(X2D, Y2D, Z2D, zdir='z', offset=-100, cmap=cm.coolwarm)
+        # cset = self.axes.contour(X2D, Y2D, Z2D, zdir='x', offset=-40, cmap=cm.coolwarm)
+        # cset = self.axes.contour(X2D, Y2D, Z2D, zdir='y', offset=40, cmap=cm.coolwarm)
+            
         # ax.plot_wireframe(X, Y, Z, rstride=10, cstride=10)
         # self.axes.plot(delta, label="Delta")
         # print(self.option_price)
