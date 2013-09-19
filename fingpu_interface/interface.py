@@ -51,6 +51,7 @@ class PlotFrame(wx.Frame):
         self.viewLegend = False
         self.viewGrid = True
         self.viewFill = False
+        self.showDifference = False
         self.current_view = 0
 
         # initialise data
@@ -71,24 +72,48 @@ class PlotFrame(wx.Frame):
 
     # on span-selection of graph TODO still
     def onselect(self, xmin, xmax):
-        print("onselect")
+        # initialise data sets
         t = numpy.arange(0, 31, 1)
-        p = numpy.array(map(float, self.option_price[0]))
+        option_price = []
+        delta = []
+        gamma = []
+        theta = []
+        rho = []
+        vega = []
+        
+        # identify the indices of new data set based on selection
         indmin = int(xmin)
         indmax = numpy.searchsorted(t, (xmin, xmax))
-        indmax = min(len(p)-1, int(xmax))
-
+        indmax = min(len(t)-1, int(xmax)+1)
+        
         thisx = t[indmin:indmax]
-        thisy = p[indmin:indmax]
+        if len(self.option_price) > 0:
+            option_price = numpy.array(map(float, self.option_price[0]))
+            thisy = option_price[indmin:indmax]
+            self.line1.set_data(thisx, thisy)
+        if len(self.delta) > 0:
+            delta = numpy.array(map(float, self.delta[0]))
+            thisy = delta[indmin:indmax]
+            self.line2.set_data(thisx, thisy)
+        if len(self.gamma) > 0:
+            gamma = numpy.array(map(float, self.gamma[0]))
+            thisy = gamma[indmin:indmax]
+            self.line3.set_data(thisx, thisy)
+        if len(self.theta) > 0:
+            theta = numpy.array(map(float, self.theta[0]))
+            thisy = theta[indmin:indmax]
+            self.line4.set_data(thisx, thisy)
+        if len(self.rho) > 0:
+            rho = numpy.array(map(float, self.rho[0]))
+            thisy = rho[indmin:indmax]
+            self.line5.set_data(thisx, thisy)
+        if len(self.vega) > 0:
+            vega = numpy.array(map(float, self.vega[0]))
+            thisy = vega[indmin:indmax]
+            self.line6.set_data(thisx, thisy)
 
-        print(thisx)
-        print(thisy)
-        # thisy = map(float, thisy)
-
-        print(self.line1)
-        self.line1.set_data(thisx, thisy)
         self.axes2.set_xlim(thisx[0]-1, thisx[-1]+1)
-        self.axes2.set_ylim(thisy[0]-300, thisy[-1]+300)
+        # self.axes2.set_ylim(thisy[0]-300, thisy[-1]+300)
         self.canvas.draw()
 
     def Build_Panel(self):
@@ -132,6 +157,7 @@ class PlotFrame(wx.Frame):
         self.rhoCheck = wx.CheckBox(self.panel, label="Rho", pos=(20, 20))
         self.thetaCheck = wx.CheckBox(self.panel, label="Theta", pos=(20, 20))
         self.vegaCheck = wx.CheckBox(self.panel, label="Vega", pos=(20, 20))
+        self.differenceCheck = wx.CheckBox(self.panel, label="Show Difference", pos=(20, 20))
 
         self.Bind(wx.EVT_RADIOBUTTON, self.onCallRadio, self.callRadio)
         self.Bind(wx.EVT_RADIOBUTTON, self.onPutRadio, self.putRadio)
@@ -141,13 +167,14 @@ class PlotFrame(wx.Frame):
         self.Bind(wx.EVT_CHECKBOX, self.onRho, self.rhoCheck)
         self.Bind(wx.EVT_CHECKBOX, self.onTheta, self.thetaCheck)
         self.Bind(wx.EVT_CHECKBOX, self.onVega, self.vegaCheck)
+        self.Bind(wx.EVT_CHECKBOX, self.onDifferenceCheck, self.differenceCheck)
 
         # Create the navigation toolbar, tied to the canvas
         self.toolbar = NavigationToolbar(self.canvas)
 
-        #
+        ####################
         # Layout with sizers
-        #
+        ####################
         flags = wx.ALIGN_LEFT | wx.ALL | wx.ALIGN_CENTER_VERTICAL
         self.sizer = wx.BoxSizer(wx.VERTICAL)
 
@@ -157,22 +184,40 @@ class PlotFrame(wx.Frame):
         self.flexiGridSizer = wx.FlexGridSizer(4, 2, 3, 10)
 
         # adds border around sliders to group related widgets
+        self.vboxOptions.AddSpacer(10)
         self.sliderBorder = wx.StaticBoxSizer(wx.StaticBox(self.panel, -1, 'Sliders'), orient=wx.VERTICAL)
         self.flexiGridSizer.AddMany([(self.stockSlider_label), (self.stockSlider, 1, wx.ALL), 
             (self.rateSlider_label), (self.rateSlider, 1, wx.EXPAND),
             (self.volatilSlider_label), (self.volatilSlider, 1, wx.EXPAND),
             (self.timeStepSlider_label), (self.timeStepSlider, 1, wx.EXPAND)])
         self.sliderBorder.Add(self.flexiGridSizer, 1, wx.ALL, 5)
-        self.vboxOptions.Add(self.sliderBorder, 1, flag=wx.ALIGN_LEFT|wx.ALL)
-        self.vboxOptions.AddSpacer(10)
+        self.vboxOptions.Add(self.sliderBorder, 0, flag=wx.ALIGN_LEFT|wx.ALL)
+        
 
-        self.optionsBorder = wx.StaticBoxSizer(wx.StaticBox(self.panel, -1, 'Options'), orient=wx.VERTICAL)
-        self.flexiOptions = wx.FlexGridSizer(9, 1, 3, 10)
-        self.flexiOptions.AddMany([(self.callRadio, 1, wx.EXPAND), (self.putRadio, 1, wx.EXPAND), (self.spaceKeeper), 
-            (self.optionPriceCheck, 1, wx.EXPAND), (self.deltaCheck, 1, wx.EXPAND), (self.gammaCheck, 1, wx.EXPAND), 
-            (self.rhoCheck, 1, wx.EXPAND), (self.thetaCheck, 1, wx.EXPAND), (self.vegaCheck, 1, wx.EXPAND)])
+        # add border for type of option price
+        self.optionsBorder = wx.StaticBoxSizer(wx.StaticBox(self.panel, -1, 'Option Price'), orient=wx.VERTICAL)
+        self.flexiOptions = wx.FlexGridSizer(2, 1, 3, 10)
+        self.flexiOptions.AddMany([(self.callRadio, 1, wx.EXPAND), 
+            (self.putRadio, 1, wx.EXPAND)])            
         self.optionsBorder.Add(self.flexiOptions, 1, wx.ALL, 5)
-        self.vboxOptions.Add(self.optionsBorder, 2, flag=wx.ALIGN_LEFT|wx.ALL|wx.GROW)
+        self.vboxOptions.Add(self.optionsBorder, 1, flag=wx.ALIGN_LEFT|wx.ALL|wx.GROW)
+        
+        # add border for greeks
+        self.greekOptionsBorder = wx.StaticBoxSizer(wx.StaticBox(self.panel, -1, 'Options'), orient=wx.VERTICAL)
+        self.flexiOptions2 = wx.FlexGridSizer(7, 1, 3, 10)
+        self.flexiOptions2.AddMany([(self.optionPriceCheck, 1, wx.EXPAND), (self.deltaCheck, 1, wx.EXPAND), (self.gammaCheck, 1, wx.EXPAND), 
+            (self.rhoCheck, 1, wx.EXPAND), (self.thetaCheck, 1, wx.EXPAND), (self.vegaCheck, 1, wx.EXPAND)])
+        self.greekOptionsBorder.Add(self.flexiOptions2, 1, wx.ALL, 5)
+        self.vboxOptions.Add(self.greekOptionsBorder, 2, flag=wx.ALIGN_LEFT|wx.ALL|wx.GROW)
+        #self.vboxOptions.AddSpacer(5)
+        
+        # add border for other checkable options
+        self.otherOptionsBorder = wx.StaticBoxSizer(wx.StaticBox(self.panel, -1, 'Options'), orient=wx.VERTICAL)
+        self.flexiOptions3 = wx.FlexGridSizer(1, 1, 3, 10)
+        self.flexiOptions3.AddMany([(self.differenceCheck, 1, wx.EXPAND)])
+        self.otherOptionsBorder.Add(self.flexiOptions3, 1, wx.ALL, 5)
+        self.vboxOptions.Add(self.otherOptionsBorder, 0, flag=wx.ALIGN_LEFT|wx.ALL|wx.GROW)
+        self.vboxOptions.AddSpacer(5)
 
         self.hboxMainBlock.Add(self.vboxOptions, 0, flag=flags)
         self.hboxMainBlock.Add(self.canvas, 1, flag=wx.ALIGN_RIGHT|wx.ALL|wx.ALIGN_CENTER_VERTICAL|wx.EXPAND)
@@ -225,8 +270,8 @@ class PlotFrame(wx.Frame):
 
         f1 = wx.Menu()
         f1.Append(MENU_BASIC, '&Basic', "Basic View(2D)")
-        f1.Append(MENU_ADVANCE, '&Advanced', "Advanced View(2D)")
-        f1.Append(MENU_3D, 'A&dvanced3D', "Advanced View(3D)")
+        f1.Append(MENU_ADVANCE, '&Advanced-2D', "Advanced View(2D)")
+        f1.Append(MENU_3D, 'A&dvanced-3D', "Advanced View(3D)")
         menuBar.Append(f1, "&View")
 
         f2 = wx.Menu()
@@ -377,45 +422,82 @@ class PlotFrame(wx.Frame):
 
     """ GUI event methods """
     def onCallRadio(self, event=None):
-        self.option_price = self.fileReader.getOptionPrice(self.callRadio.GetValue(), self.optionPriceCheck.IsChecked())
-        self.delta = self.fileReader.getDeltaValues(self.callRadio.GetValue(), self.deltaCheck.IsChecked())
-        self.gamma = self.fileReader.getGammaValues(self.callRadio.GetValue(), self.gammaCheck.IsChecked())
-        self.vega = self.fileReader.getVegaValues(self.callRadio.GetValue(), self.vegaCheck.IsChecked())
-        self.theta = self.fileReader.getThetaValues(self.callRadio.GetValue(), self.thetaCheck.IsChecked())
-        self.rho = self.fileReader.getRhoValues(self.callRadio.GetValue(), self.rhoCheck.IsChecked())
+        self.option_price = self.fileReader.getOptionPrice(self.callRadio.GetValue(), 
+            self.optionPriceCheck.IsChecked())
+        self.delta = self.fileReader.getDeltaValues(self.callRadio.GetValue(), 
+            self.deltaCheck.IsChecked(), self.differenceCheck.IsChecked())
+        self.gamma = self.fileReader.getGammaValues(self.callRadio.GetValue(), 
+            self.gammaCheck.IsChecked(), self.differenceCheck.IsChecked())
+        self.vega = self.fileReader.getVegaValues(self.callRadio.GetValue(), 
+            self.vegaCheck.IsChecked(), self.differenceCheck.IsChecked())
+        self.theta = self.fileReader.getThetaValues(self.callRadio.GetValue(), 
+            self.thetaCheck.IsChecked(), self.differenceCheck.IsChecked())
+        self.rho = self.fileReader.getRhoValues(self.callRadio.GetValue(), 
+            self.rhoCheck.IsChecked(), self.differenceCheck.IsChecked())
         self.Plot_Data()
 
     def onPutRadio(self, event=None):
-        self.option_price = self.fileReader.getOptionPrice(self.callRadio.GetValue(), self.optionPriceCheck.IsChecked())
-        self.delta = self.fileReader.getDeltaValues(self.callRadio.GetValue(), self.deltaCheck.IsChecked())
-        self.gamma = self.fileReader.getGammaValues(self.callRadio.GetValue(), self.gammaCheck.IsChecked())
-        self.vega = self.fileReader.getVegaValues(self.callRadio.GetValue(), self.vegaCheck.IsChecked())
-        self.theta = self.fileReader.getThetaValues(self.callRadio.GetValue(), self.thetaCheck.IsChecked())
-        self.rho = self.fileReader.getRhoValues(self.callRadio.GetValue(), self.rhoCheck.IsChecked())
+        self.option_price = self.fileReader.getOptionPrice(self.callRadio.GetValue(), 
+            self.optionPriceCheck.IsChecked())
+        self.delta = self.fileReader.getDeltaValues(self.callRadio.GetValue(), 
+            self.deltaCheck.IsChecked(), self.differenceCheck.IsChecked())
+        self.gamma = self.fileReader.getGammaValues(self.callRadio.GetValue(), 
+            self.gammaCheck.IsChecked(), self.differenceCheck.IsChecked())
+        self.vega = self.fileReader.getVegaValues(self.callRadio.GetValue(), 
+            self.vegaCheck.IsChecked(), self.differenceCheck.IsChecked())
+        self.theta = self.fileReader.getThetaValues(self.callRadio.GetValue(), 
+            self.thetaCheck.IsChecked(), self.differenceCheck.IsChecked())
+        self.rho = self.fileReader.getRhoValues(self.callRadio.GetValue(), 
+            self.rhoCheck.IsChecked(), self.differenceCheck.IsChecked())
         self.Plot_Data() 
 
     def onOptionPrice(self, event=None):
-        self.option_price = self.fileReader.getOptionPrice(self.callRadio.GetValue(), self.optionPriceCheck.IsChecked())
+        self.option_price = self.fileReader.getOptionPrice(self.callRadio.GetValue(), 
+            self.optionPriceCheck.IsChecked())
         self.Plot_Data()
 
     def onDelta(self, event=None):
-        self.delta = self.fileReader.getDeltaValues(self.callRadio.GetValue(), self.deltaCheck.IsChecked())
+        self.delta = self.fileReader.getDeltaValues(self.callRadio.GetValue(), 
+            self.deltaCheck.IsChecked(), self.differenceCheck.IsChecked())
         self.Plot_Data()
 
     def onGamma(self, event=None):
-        self.gamma = self.fileReader.getGammaValues(self.callRadio.GetValue(), self.gammaCheck.IsChecked())
+        self.gamma = self.fileReader.getGammaValues(self.callRadio.GetValue(), 
+            self.gammaCheck.IsChecked(), self.differenceCheck.IsChecked())
         self.Plot_Data()
 
     def onRho(self, event=None):
-        self.rho = self.fileReader.getRhoValues(self.callRadio.GetValue(), self.rhoCheck.IsChecked())
+        self.rho = self.fileReader.getRhoValues(self.callRadio.GetValue(), 
+            self.rhoCheck.IsChecked(), self.differenceCheck.IsChecked())
         self.Plot_Data()
 
     def onTheta(self, event=None):
-        self.theta = self.fileReader.getThetaValues(self.callRadio.GetValue(), self.thetaCheck.IsChecked())
+        self.theta = self.fileReader.getThetaValues(self.callRadio.GetValue(), 
+            self.thetaCheck.IsChecked(), self.differenceCheck.IsChecked())
         self.Plot_Data()
 
     def onVega(self, event=None):
-        self.vega = self.fileReader.getVegaValues(self.callRadio.GetValue(), self.vegaCheck.IsChecked())
+        self.vega = self.fileReader.getVegaValues(self.callRadio.GetValue(), 
+            self.vegaCheck.IsChecked(), self.differenceCheck.IsChecked())
+        self.Plot_Data()
+
+    def onDifferenceCheck(self, event=None):
+        if self.showDifference:
+            self.showDifference = False
+        else:
+            self.showDifference = True
+            
+        # reload and replot data
+        self.delta = self.fileReader.getDeltaValues(self.callRadio.GetValue(), 
+            self.deltaCheck.IsChecked(), self.differenceCheck.IsChecked())
+        self.gamma = self.fileReader.getGammaValues(self.callRadio.GetValue(), 
+            self.gammaCheck.IsChecked(), self.differenceCheck.IsChecked())
+        self.vega = self.fileReader.getVegaValues(self.callRadio.GetValue(), 
+            self.vegaCheck.IsChecked(), self.differenceCheck.IsChecked())
+        self.theta = self.fileReader.getThetaValues(self.callRadio.GetValue(), 
+            self.thetaCheck.IsChecked(), self.differenceCheck.IsChecked())
+        self.rho = self.fileReader.getRhoValues(self.callRadio.GetValue(), 
+            self.rhoCheck.IsChecked(), self.differenceCheck.IsChecked())
         self.Plot_Data()
 
     def onStockSlider(self, event=None):
@@ -588,7 +670,6 @@ class PlotFrame(wx.Frame):
 
     def Plot_Data_advanced(self, bump=0):
         """ Advanced 2D plotter """
-        # plot graphs
         self.fig.delaxes(self.axes)
         self.axes.clear()
         self.axes = self.fig.add_subplot(211)
@@ -646,38 +727,38 @@ class PlotFrame(wx.Frame):
             if len(self.delta) > 0:
                 if self.viewFill:
                     s = numpy.array(self.delta[bump])
-                    self.line2 = self.axes2.fill_between(t, p, s, where=s>=p, facecolor='red', interpolate=True)
-                    self.line2 = self.axes2.fill_between(t, p, s, where=s<=p, facecolor='green', interpolate=True)
+                    self.line2, = self.axes2.fill_between(t, p, s, where=s>=p, facecolor='red', interpolate=True)
+                    self.line2, = self.axes2.fill_between(t, p, s, where=s<=p, facecolor='green', interpolate=True)
                 else:
-                    self.line2 = self.axes2.plot(self.delta[bump], label="Delta")
+                    self.line2, = self.axes2.plot(self.delta[bump], label="Delta")
             if len(self.gamma) > 0:
                 if self.viewFill:
                     s = numpy.array(self.gamma[bump])
-                    self.line3 = self.axes2.fill_between(t, p, s, where=s>=p, facecolor='red', interpolate=True)
-                    self.line3 = self.axes2.fill_between(t, p, s, where=s<=p, facecolor='cyan', interpolate=True)
+                    self.line3, = self.axes2.fill_between(t, p, s, where=s>=p, facecolor='red', interpolate=True)
+                    self.line3, = self.axes2.fill_between(t, p, s, where=s<=p, facecolor='cyan', interpolate=True)
                 else:
-                    self.line3 = self.axes.plot(self.gamma[bump], label="Gamma")
+                    self.line3, = self.axes.plot(self.gamma[bump], label="Gamma")
             if len(self.vega) > 0:
                 if self.viewFill:
                     s = numpy.array(self.vega[bump])
-                    self.line4 = self.axes2.fill_between(t, p, s, where=s>=p, facecolor='red', interpolate=True)
-                    self.line4 = self.axes2.fill_between(t, p, s, where=s<=p, facecolor='yellow', interpolate=True)
+                    self.line4, = self.axes2.fill_between(t, p, s, where=s>=p, facecolor='red', interpolate=True)
+                    self.line4, = self.axes2.fill_between(t, p, s, where=s<=p, facecolor='yellow', interpolate=True)
                 else:
-                    self.line4 = self.axes2.plot(self.vega[bump], label="Vega")
+                    self.line4, = self.axes2.plot(self.vega[bump], label="Vega")
             if len(self.theta) > 0:
                 if self.viewFill:
                     s = numpy.array(self.theta[bump])
-                    self.line5 = self.axes2.fill_between(t, p, s, where=s>=p, facecolor='red', interpolate=True)
-                    self.line5 = self.axes2.fill_between(t, p, s, where=s<=p, facecolor='blue', interpolate=True)
+                    self.line5, = self.axes2.fill_between(t, p, s, where=s>=p, facecolor='red', interpolate=True)
+                    self.line5, = self.axes2.fill_between(t, p, s, where=s<=p, facecolor='blue', interpolate=True)
                 else:
-                    self.line5 = self.axes2.plot(t, self.theta[bump], label="Theta")
+                    self.line5, = self.axes2.plot(t, self.theta[bump], label="Theta")
             if len(self.rho) > 0:
                 if self.viewFill:
                     s = numpy.array(self.rho[bump])
-                    self.line6 = self.axes2.fill_between(t, p, s, where=s>=p, facecolor='red', interpolate=True)
-                    self.line6 = self.axes2.fill_between(t, p, s, where=s<=p, facecolor='white', interpolate=True)
+                    self.line6, = self.axes2.fill_between(t, p, s, where=s>=p, facecolor='red', interpolate=True)
+                    self.line6, = self.axes2.fill_between(t, p, s, where=s<=p, facecolor='white', interpolate=True)
                 else:
-                    self.line6 = self.axes2.plot(t, self.rho[bump], label="Rho")
+                    self.line6, = self.axes2.plot(t, self.rho[bump], label="Rho")
 
         if self.viewLegend:
             # Shink current axis by 15%

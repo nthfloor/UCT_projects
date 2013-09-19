@@ -102,7 +102,7 @@ class Reader():
                     tempOption = []
         return temp
 
-    def getDeltaValues(self, useCallOptionData=True, viewDeltaValues=True):
+    def getDeltaValues(self, useCallOptionData=True, viewDeltaValues=True, viewDifference=False):
         temp = []
         tempDelta = []
         if viewDeltaValues:
@@ -116,7 +116,11 @@ class Reader():
                             s1 = float(self.stock_price_data[stock_index])
                             s2 = float(self.stock_price_data[stock_index+1])
                             greek_value = greek_value*(s2-s1) # calculate delta effect relative to option price
-                            tempDelta.append(greek_value+float(call_option[1]))
+                            
+                            if viewDifference:
+                                tempDelta.append(greek_value)
+                            else:
+                                tempDelta.append(greek_value+float(call_option[1]))
                         else:
                             tempDelta.append(0)
                     temp.append(tempDelta)
@@ -131,14 +135,17 @@ class Reader():
                             s1 = float(self.stock_price_data[stock_index])
                             s2 = float(self.stock_price_data[stock_index+1])
                             greek_value = greek_value*(s2-s1) # calculate delta effect relative to option price
-                            tempDelta.append(greek_value+float(put_option[1]))
+                            if viewDifference:
+                                tempDelta.append(greek_value)
+                            else:                            
+                                tempDelta.append(greek_value+float(put_option[1]))
                         else:
                             tempDelta.append(0)
                     temp.append(tempDelta)
                     tempDelta = []
         return temp
 
-    def getGammaValues(self, useCallOptionData, viewGammaValues=True):
+    def getGammaValues(self, useCallOptionData, viewGammaValues=True, viewDifference=False):
         temp = []
         tempGamma = []
         if viewGammaValues:
@@ -151,7 +158,10 @@ class Reader():
                             s1 = float(self.stock_price_data[stock_index])
                             s2 = float(self.stock_price_data[stock_index+1])
                             gamma = gamma*(s2-s1) # calculate delta effect relative to option price
-                            tempGamma.append(gamma+float(call_option[1]))
+                            if viewDifference:
+                                tempGamma.append(gamma)
+                            else:
+                                tempGamma.append(gamma+float(call_option[1]))
                         else:
                             tempGamma.append(0)
                     temp.append(tempGamma)
@@ -165,14 +175,17 @@ class Reader():
                             s1 = float(self.stock_price_data[stock_index])
                             s2 = float(self.stock_price_data[stock_index+1])
                             greek_value = greek_value*(s2-s1) # calculate delta effect relative to option price
-                            tempGamma.append(greek_value+float(put_option[1]))
+                            if viewDifference:
+                                tempGamma.append(greek_value)
+                            else:
+                                tempGamma.append(greek_value+float(put_option[1]))
                         else:
                             tempGamma.append(0)
                     temp.append(tempGamma)
                     tempGamma = []
         return temp
 
-    def getVegaValues(self, useCallOptionData, viewVegaValues=True):
+    def getVegaValues(self, useCallOptionData, viewVegaValues=True, viewDifference=False):
         temp = []
         tempVega = []
         if viewVegaValues:
@@ -186,8 +199,11 @@ class Reader():
                             s1 = float(self.stock_price_data[stock_index])
                             s2 = float(self.stock_price_data[stock_index+1])
                             greek_value = greek_value*(s2-s1) # calculate delta effect relative to option price
-                            print(stock_index,s1,s2, greek_value, float(call_option[1]))
-                            tempVega.append(greek_value+float(call_option[1]))
+                            #print(stock_index,s1,s2, greek_value, float(call_option[1]))
+                            if viewDifference:
+                                tempVega.append(greek_value)
+                            else:
+                                tempVega.append(greek_value+float(call_option[1]))
                         else:
                             tempVega.append(0)
                     temp.append(tempVega)
@@ -202,14 +218,17 @@ class Reader():
                             s1 = float(self.stock_price_data[stock_index])
                             s2 = float(self.stock_price_data[stock_index+1])
                             greek_value = greek_value*(s2-s1) # calculate delta effect relative to option price
-                            tempVega.append(greek_value+float(put_option[1]))
+                            if viewDifference:
+                                tempVega.append(greek_value)
+                            else:
+                                tempVega.append(greek_value+float(put_option[1]))
                         else:
                             tempVega.append(0)
                     temp.append(tempVega)
                     tempVega = []
         return temp
 
-    def getThetaValues(self, useCallOptionData, viewThetaValues=True):
+    def getThetaValues(self, useCallOptionData, viewThetaValues=True, viewDifference=False):
         temp = []
         tempTheta = []
         if viewThetaValues:
@@ -217,19 +236,25 @@ class Reader():
                 for call_option_file in self.call_option_data:
                     for call_option in call_option_file:
                         greek_value = float(call_option[5])/365
-                        tempTheta.append(greek_value+float(call_option[1]))
+                        if viewDifference:
+                            tempTheta.append(greek_value)
+                        else:
+                            tempTheta.append(greek_value+float(call_option[1]))
                     temp.append(tempTheta)
                     tempTheta = []
             else:
                 for put_option_file in self.put_option_data:
                     for put_option in put_option_file:
                         greek_value = float(put_option[5])
-                        tempTheta.append(greek_value+float(put_option[1]))
+                        if viewDifference:
+                            tempTheta.append(greek_value)
+                        else:
+                            tempTheta.append(greek_value+float(put_option[1]))
                     temp.append(tempTheta)
                     tempTheta = []
         return temp
 
-    def getRhoValues(self, useCallOptionData, viewRhoValues=True):
+    def getRhoValues(self, useCallOptionData, viewRhoValues=True, viewDifference=False):
         temp = []
         tempRho = []
         if viewRhoValues:
@@ -242,7 +267,10 @@ class Reader():
                             s1 = float(self.interest_rate_data[r_index])
                             s2 = float(self.interest_rate_data[r_index+1])
                             greek_value = greek_value*(s2-s1) # calculate delta effect relative to option price
-                            tempRho.append(greek_value+float(call_option[1]))
+                            if viewDifference:
+                                tempRho.append(greek_value)
+                            else:
+                                tempRho.append(greek_value+float(call_option[1]))
                         else:
                             tempRho.append(0)
                     temp.append(tempRho)
@@ -256,7 +284,10 @@ class Reader():
                             s1 = float(self.interest_rate_data[r_index])
                             s2 = float(self.interest_rate_data[r_index+1])
                             greek_value = greek_value*(s2-s1) # calculate delta effect relative to option price
-                            tempRho.append(greek_value+float(put_option[1]))
+                            if viewDifference:
+                                tempRho.append(greek_value)
+                            else:
+                                tempRho.append(greek_value+float(put_option[1]))
                         else:
                             tempRho.append(0)
                     temp.append(tempRho)
