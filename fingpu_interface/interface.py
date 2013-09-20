@@ -63,6 +63,15 @@ class PlotFrame(wx.Frame):
         self.theta = []
         self.rho = []
         
+        # initialise secondary data sets
+        self.option_price_fill = []
+        self.time_span_fill = []
+        self.delta_fill = []
+        self.gamma_fill = []
+        self.vega_fill = []
+        self.theta_fill = []
+        self.rho_fill = []
+        
         # initialise bump values
         self.stock_bump = 0
         self.time_bump = 0
@@ -92,35 +101,43 @@ class PlotFrame(wx.Frame):
         indmax = numpy.searchsorted(t, (xmin, xmax))
         indmax = min(len(t)-1, int(xmax)+1)
         
-        thisx = t[indmin:indmax]
+        self.time_span_fill = t[indmin:indmax]
         if len(self.option_price) > 0:
             option_price = numpy.array(map(float, self.option_price[self.stock_bump]))
-            thisy = option_price[indmin:indmax]
-            self.line1.set_data(thisx, thisy)
+            self.option_price_fill = option_price[indmin:indmax]
+            if not self.viewFill:
+                self.line1.set_data(self.time_span_fill, self.option_price_fill)
         if len(self.delta) > 0:
             delta = numpy.array(map(float, self.delta[self.stock_bump]))
-            thisy = delta[indmin:indmax]
-            self.line2.set_data(thisx, thisy)
+            self.delta_fill = delta[indmin:indmax]
+            if not self.viewFill:
+                self.line2.set_data(self.time_span_fill, self.delta_fill)
         if len(self.gamma) > 0:
             gamma = numpy.array(map(float, self.gamma[self.stock_bump]))
-            thisy = gamma[indmin:indmax]
-            self.line3.set_data(thisx, thisy)
+            this.gamma_fill = gamma[indmin:indmax]
+            if not self.viewFill:
+                self.line3.set_data(self.time_span_fill, self.gamma_fill)
         if len(self.theta) > 0:
             theta = numpy.array(map(float, self.theta[self.time_bump]))
-            thisy = theta[indmin:indmax]
-            self.line4.set_data(thisx, thisy)
+            this.theta_fill = theta[indmin:indmax]
+            if not self.viewFill:
+                self.line4.set_data(self.time_span_fill, self.theta_fill)
         if len(self.rho) > 0:
             rho = numpy.array(map(float, self.rho[self.rate_bump]))
-            thisy = rho[indmin:indmax]
-            self.line5.set_data(thisx, thisy)
+            this.rho_fill = rho[indmin:indmax]
+            if not self.viewFill:
+                self.line5.set_data(self.time_span_fill, self.rho_fill)
         if len(self.vega) > 0:
             vega = numpy.array(map(float, self.vega[self.volitile_bump]))
-            thisy = vega[indmin:indmax]
-            self.line6.set_data(thisx, thisy)
+            this.vega_fill = vega[indmin:indmax]
+            if not self.viewFill:
+                self.line6.set_data(self.time_span_fill, self.vega_fill)
 
-        self.axes2.set_xlim(thisx[0]-1, thisx[-1]+1)
-        # self.axes2.set_ylim(thisy[0]-300, thisy[-1]+300)
-        self.canvas.draw()
+        self.axes2.set_xlim(self.time_span_fill[0]-1, self.time_span_fill[-1]+1)
+        if not self.viewFill:
+            self.canvas.draw()
+        else:
+            self.Plot_Data()
 
     def Build_Panel(self):
         self.panel = wx.Panel(self)
@@ -627,40 +644,40 @@ class PlotFrame(wx.Frame):
             # plot graphs here
             t = numpy.arange(0, 31, 1)
             p = []
-            if self.viewFill:
+            if self.viewFill and len(self.option_price) > 0:
                 p = numpy.array(map(float, self.option_price[self.stock_bump]))
             if len(self.option_price) > 0:
                 self.axes.plot(t, self.option_price[self.stock_bump], label="Option Price")
             if len(self.delta) > 0:
-                if self.viewFill:
+                if self.viewFill and len(self.option_price) > 0:
                     s = numpy.array(self.delta[self.stock_bump])
                     self.axes.fill_between(t, p, s, where=s>=p, facecolor='red', interpolate=True)
                     self.axes.fill_between(t, p, s, where=s<=p, facecolor='green', interpolate=True)
                 else:
                     self.axes.plot(self.delta[self.stock_bump], label="Delta")
-            if len(self.gamma) > 0:
+            if len(self.gamma) > 0 and len(self.option_price) > 0:
                 if self.viewFill:
                     s = numpy.array(self.gamma[self.stock_bump])
                     self.axes.fill_between(t, p, s, where=s>=p, facecolor='red', interpolate=True)
                     self.axes.fill_between(t, p, s, where=s<=p, facecolor='cyan', interpolate=True)
                 else:
                     self.axes.plot(self.gamma[self.stock_bump], label="Gamma")
-            if len(self.vega) > 0:
-                if self.viewFill:
+            if len(self.vega) > 0 and len(self.option_price) > 0:
+                if self.viewFill and len(self.option_price) > 0:
                     s = numpy.array(self.vega[self.volitile_bump])
                     self.axes.fill_between(t, p, s, where=s>=p, facecolor='red', interpolate=True)
                     self.axes.fill_between(t, p, s, where=s<=p, facecolor='yellow', interpolate=True)
                 else:
                     self.axes.plot(self.vega[self.volitile_bump], label="Vega")
             if len(self.theta) > 0:
-                if self.viewFill:
+                if self.viewFill and len(self.option_price) > 0:
                     s = numpy.array(self.theta[self.time_bump])
                     self.axes.fill_between(t, p, s, where=s>=p, facecolor='red', interpolate=True)
                     self.axes.fill_between(t, p, s, where=s<=p, facecolor='blue', interpolate=True)
                 else:
                     self.axes.plot(t, self.theta[self.time_bump], label="Theta")
             if len(self.rho) > 0:
-                if self.viewFill:
+                if self.viewFill and len(self.option_price) > 0:
                     s = numpy.array(self.rho[self.rate_bump])
                     self.axes.fill_between(t, p, s, where=s>=p, facecolor='red', interpolate=True)
                     self.axes.fill_between(t, p, s, where=s<=p, facecolor='white', interpolate=True)
@@ -730,42 +747,49 @@ class PlotFrame(wx.Frame):
         self.axes2 = self.fig.add_subplot(212)
         self.axes2.clear()
         self.axes2.grid(self.viewGrid)
+        if self.viewFill:
+            p = self.option_price_fill
+        if len(self.time_span_fill) < 0:
+            self.time_span_fill = t
         if True:
             if len(self.option_price) > 0:
-                self.line1, = self.axes2.plot(t, self.option_price[self.stock_bump], label="Option Price")
+                if self.viewFill:
+                    self.line1, = self.axes2.plot(self.time_span_fill, self.option_price_fill, label="Option Price")
+                else:
+                    self.line1, = self.axes2.plot(t, self.option_price[self.stock_bump], label="Option Price")
             if len(self.delta) > 0:
                 if self.viewFill and len(self.option_price) > 0:
-                    s = numpy.array(self.delta[self.stock_bump])
-                    self.line2, = self.axes2.fill_between(t, p, s, where=s>=p, facecolor='red', interpolate=True)
-                    self.line2, = self.axes2.fill_between(t, p, s, where=s<=p, facecolor='green', interpolate=True)
+                    s = numpy.array(self.delta_fill)
+                    self.line2 = self.axes2.fill_between(self.time_span_fill, p, s, where=s>=p, facecolor='red', interpolate=True)
+                    self.line2 = self.axes2.fill_between(self.time_span_fill, p, s, where=s<=p, facecolor='green', interpolate=True)
                 else:
                     self.line2, = self.axes2.plot(self.delta[self.stock_bump], label="Delta")
             if len(self.gamma) > 0:
                 if self.viewFill and len(self.option_price) > 0:
-                    s = numpy.array(self.gamma[self.stock_bump])
-                    self.line3, = self.axes2.fill_between(t, p, s, where=s>=p, facecolor='red', interpolate=True)
-                    self.line3, = self.axes2.fill_between(t, p, s, where=s<=p, facecolor='cyan', interpolate=True)
+                    s = numpy.array(self.gamma_fill)
+                    self.line3 = self.axes2.fill_between(self.time_span_fill, p, s, where=s>=p, facecolor='red', interpolate=True)
+                    self.line3 = self.axes2.fill_between(self.time_span_fill, p, s, where=s<=p, facecolor='cyan', interpolate=True)
                 else:
                     self.line3, = self.axes2.plot(self.gamma[self.stock_bump], label="Gamma")
             if len(self.vega) > 0:
                 if self.viewFill and len(self.option_price) > 0:
-                    s = numpy.array(self.vega[self.volitile_bump])
-                    self.line4, = self.axes2.fill_between(t, p, s, where=s>=p, facecolor='red', interpolate=True)
-                    self.line4, = self.axes2.fill_between(t, p, s, where=s<=p, facecolor='yellow', interpolate=True)
+                    s = numpy.array(self.vega_fill)
+                    self.line4 = self.axes2.fill_between(self.time_span_fill, p, s, where=s>=p, facecolor='red', interpolate=True)
+                    self.line4 = self.axes2.fill_between(self.time_span_fill, p, s, where=s<=p, facecolor='yellow', interpolate=True)
                 else:
                     self.line4, = self.axes2.plot(self.vega[self.volitile_bump], label="Vega")
             if len(self.theta) > 0:
                 if self.viewFill and len(self.option_price) > 0:
-                    s = numpy.array(self.theta[self.time_bump])
-                    self.line5, = self.axes2.fill_between(t, p, s, where=s>=p, facecolor='red', interpolate=True)
-                    self.line5, = self.axes2.fill_between(t, p, s, where=s<=p, facecolor='blue', interpolate=True)
+                    s = numpy.array(self.theta_fill)
+                    self.line5 = self.axes2.fill_between(self.time_span_fill, p, s, where=s>=p, facecolor='red', interpolate=True)
+                    self.line5 = self.axes2.fill_between(self.time_span_fill, p, s, where=s<=p, facecolor='blue', interpolate=True)
                 else:
                     self.line5, = self.axes2.plot(t, self.theta[self.time_bump], label="Theta")
             if len(self.rho) > 0:
                 if self.viewFill and len(self.option_price) > 0:
-                    s = numpy.array(self.rho[self.rate_bump])
-                    self.line6, = self.axes2.fill_between(t, p, s, where=s>=p, facecolor='red', interpolate=True)
-                    self.line6, = self.axes2.fill_between(t, p, s, where=s<=p, facecolor='white', interpolate=True)
+                    s = numpy.array(self.rho_fill)
+                    self.line6 = self.axes2.fill_between(self.time_span_fill, p, s, where=s>=p, facecolor='red', interpolate=True)
+                    self.line6 = self.axes2.fill_between(self.time_span_fill, p, s, where=s<=p, facecolor='white', interpolate=True)
                 else:
                     self.line6, = self.axes2.plot(t, self.rho[self.rate_bump], label="Rho")
 
