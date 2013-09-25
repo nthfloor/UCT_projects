@@ -114,22 +114,22 @@ class PlotFrame(wx.Frame):
                 self.line2.set_data(self.time_span_fill, self.delta_fill)
         if len(self.gamma) > 0:
             gamma = numpy.array(map(float, self.gamma[self.stock_bump]))
-            this.gamma_fill = gamma[indmin:indmax]
+            self.gamma_fill = gamma[indmin:indmax]
             if not self.viewFill:
                 self.line3.set_data(self.time_span_fill, self.gamma_fill)
         if len(self.theta) > 0:
             theta = numpy.array(map(float, self.theta[self.time_bump]))
-            this.theta_fill = theta[indmin:indmax]
+            self.theta_fill = theta[indmin:indmax]
             if not self.viewFill:
                 self.line4.set_data(self.time_span_fill, self.theta_fill)
         if len(self.rho) > 0:
             rho = numpy.array(map(float, self.rho[self.rate_bump]))
-            this.rho_fill = rho[indmin:indmax]
+            self.rho_fill = rho[indmin:indmax]
             if not self.viewFill:
                 self.line5.set_data(self.time_span_fill, self.rho_fill)
         if len(self.vega) > 0:
             vega = numpy.array(map(float, self.vega[self.volitile_bump]))
-            this.vega_fill = vega[indmin:indmax]
+            self.vega_fill = vega[indmin:indmax]
             if not self.viewFill:
                 self.line6.set_data(self.time_span_fill, self.vega_fill)
 
@@ -628,6 +628,12 @@ class PlotFrame(wx.Frame):
         self.Plot_Data()
         self.Plot_Data()
 
+    def clearPlots(self):
+        """ Clear all graphs and plots for next draw """
+        for a in self.fig.axes:
+            print(a)
+            self.fig.delaxes(a)
+
     """ Graph plotting methods """
     def Plot_Data(self):
         if self.current_view == 1:
@@ -636,8 +642,8 @@ class PlotFrame(wx.Frame):
             self.Plot_Data_3D()
         elif self.current_view == 0:
             """ Basic 2D graph plotter """
-            self.fig.delaxes(self.axes)
-            self.axes.clear()
+            self.clearPlots()
+            
             self.axes = self.fig.add_subplot(111) # can use add_axes, but then nav-toolbar would not work
             self.axes.grid(self.viewGrid)
 
@@ -696,8 +702,7 @@ class PlotFrame(wx.Frame):
 
     def Plot_Data_advanced(self):
         """ Advanced 2D plotter """
-        self.fig.delaxes(self.axes)
-        self.axes.clear()
+        self.clearPlots()
         self.axes = self.fig.add_subplot(211)
         self.axes.grid(self.viewGrid)
 
@@ -745,7 +750,6 @@ class PlotFrame(wx.Frame):
                     self.axes.plot(t, self.rho[self.rate_bump], label="Rho")
 
         self.axes2 = self.fig.add_subplot(212)
-        self.axes2.clear()
         self.axes2.grid(self.viewGrid)
         if self.viewFill:
             p = self.option_price_fill
@@ -771,27 +775,27 @@ class PlotFrame(wx.Frame):
                     self.line3 = self.axes2.fill_between(self.time_span_fill, p, s, where=s<=p, facecolor='cyan', interpolate=True)
                 else:
                     self.line3, = self.axes2.plot(self.gamma[self.stock_bump], label="Gamma")
-            if len(self.vega) > 0:
-                if self.viewFill and len(self.option_price) > 0:
-                    s = numpy.array(self.vega_fill)
-                    self.line4 = self.axes2.fill_between(self.time_span_fill, p, s, where=s>=p, facecolor='red', interpolate=True)
-                    self.line4 = self.axes2.fill_between(self.time_span_fill, p, s, where=s<=p, facecolor='yellow', interpolate=True)
-                else:
-                    self.line4, = self.axes2.plot(self.vega[self.volitile_bump], label="Vega")
             if len(self.theta) > 0:
                 if self.viewFill and len(self.option_price) > 0:
                     s = numpy.array(self.theta_fill)
-                    self.line5 = self.axes2.fill_between(self.time_span_fill, p, s, where=s>=p, facecolor='red', interpolate=True)
-                    self.line5 = self.axes2.fill_between(self.time_span_fill, p, s, where=s<=p, facecolor='blue', interpolate=True)
+                    self.line4 = self.axes2.fill_between(self.time_span_fill, p, s, where=s>=p, facecolor='red', interpolate=True)
+                    self.line4 = self.axes2.fill_between(self.time_span_fill, p, s, where=s<=p, facecolor='blue', interpolate=True)
                 else:
-                    self.line5, = self.axes2.plot(t, self.theta[self.time_bump], label="Theta")
+                    self.line4, = self.axes2.plot(t, self.theta[self.time_bump], label="Theta")
             if len(self.rho) > 0:
                 if self.viewFill and len(self.option_price) > 0:
                     s = numpy.array(self.rho_fill)
-                    self.line6 = self.axes2.fill_between(self.time_span_fill, p, s, where=s>=p, facecolor='red', interpolate=True)
-                    self.line6 = self.axes2.fill_between(self.time_span_fill, p, s, where=s<=p, facecolor='white', interpolate=True)
+                    self.line5 = self.axes2.fill_between(self.time_span_fill, p, s, where=s>=p, facecolor='red', interpolate=True)
+                    self.line5 = self.axes2.fill_between(self.time_span_fill, p, s, where=s<=p, facecolor='white', interpolate=True)
                 else:
-                    self.line6, = self.axes2.plot(t, self.rho[self.rate_bump], label="Rho")
+                    self.line5, = self.axes2.plot(t, self.rho[self.rate_bump], label="Rho")
+            if len(self.vega) > 0:
+                if self.viewFill and len(self.option_price) > 0:
+                    s = numpy.array(self.vega_fill)
+                    self.line6 = self.axes2.fill_between(self.time_span_fill, p, s, where=s>=p, facecolor='red', interpolate=True)
+                    self.line6 = self.axes2.fill_between(self.time_span_fill, p, s, where=s<=p, facecolor='yellow', interpolate=True)
+                else:
+                    self.line6, = self.axes2.plot(self.vega[self.volitile_bump], label="Vega")
 
         if self.viewLegend:
             # Shink current axis by 15%
@@ -808,8 +812,8 @@ class PlotFrame(wx.Frame):
     def Plot_Data_3D(self):
         """ Advanced 3D plotter """
         # plot graphs
-        self.fig.delaxes(self.axes)
-        self.axes.clear()
+        self.clearPlots()
+            
         self.axes = self.fig.add_subplot(111, projection='3d') # can use add_axes, but then nav-toolbar would not work
         self.axes.grid(self.viewGrid)
 
@@ -817,13 +821,18 @@ class PlotFrame(wx.Frame):
         b = numpy.arange(0, 9, 1)
         # p = map(float, self.option_price)
         p = [[float(string) for string in inner] for inner in self.option_price]
-        Z2D, Y2D = numpy.meshgrid(b, t)
+        X2D, Y2D = numpy.meshgrid(b, t)
         # Z2D = numpy.reshape(t,(len(X2D[:,0]),len(X2D[0,:])))
-        X2D = p
+        Z2D = p
 
-        self.axes.plot_surface(X2D, Y2D, Z2D) #, cmap=cm.coolwarm, rstride=1, cstride=1, linewidth=0, antialiased=False)
-        print(X2D, Y2D, Z2D)
-        cset = self.axes.contour(X2D, Y2D, Z2D, zdir='z', offset=-100, cmap=cm.coolwarm)
+        
+        surf = self.axes.plot_surface(X2D, Y2D, Z2D, rstride=8, cstride=8, linewidth=0,
+            cmap=cm.coolwarm, antialiased=False) # alpha=0.3
+        self.fig.colorbar(surf, shrink=0.5, aspect=5)
+
+        
+        #~ print(X2D, Y2D, Z2D)
+        #~ cset = self.axes.contour(X2D, Y2D, Z2D, zdir='z', offset=-100, cmap=cm.coolwarm)
         # cset = self.axes.contour(X2D, Y2D, Z2D, zdir='x', offset=-40, cmap=cm.coolwarm)
         # cset = self.axes.contour(X2D, Y2D, Z2D, zdir='y', offset=40, cmap=cm.coolwarm)
             
