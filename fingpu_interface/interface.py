@@ -628,13 +628,12 @@ class PlotFrame(wx.Frame):
         self.Plot_Data()
         self.Plot_Data()
 
+    """ Graph plotting methods """
     def clearPlots(self):
         """ Clear all graphs and plots for next draw """
         for a in self.fig.axes:
-            print(a)
             self.fig.delaxes(a)
 
-    """ Graph plotting methods """
     def Plot_Data(self):
         if self.current_view == 1:
             self.Plot_Data_advanced()
@@ -821,20 +820,25 @@ class PlotFrame(wx.Frame):
         b = numpy.arange(0, 9, 1)
         # p = map(float, self.option_price)
         p = [[float(string) for string in inner] for inner in self.option_price]
-        X2D, Y2D = numpy.meshgrid(b, t)
+        X2D, Y2D = numpy.meshgrid(t, b)
         # Z2D = numpy.reshape(t,(len(X2D[:,0]),len(X2D[0,:])))
         Z2D = p
 
+        #~ print(X2D)
+        #~ print('')
+        #~ print(Y2D)
+        #~ print('')
+        #~ print(Z2D)
         
         surf = self.axes.plot_surface(X2D, Y2D, Z2D, rstride=8, cstride=8, linewidth=0,
-            cmap=cm.coolwarm, antialiased=False) # alpha=0.3
+            antialiased=False, cmap=cm.coolwarm, alpha=0.3)
         self.fig.colorbar(surf, shrink=0.5, aspect=5)
 
         
         #~ print(X2D, Y2D, Z2D)
-        #~ cset = self.axes.contour(X2D, Y2D, Z2D, zdir='z', offset=-100, cmap=cm.coolwarm)
-        # cset = self.axes.contour(X2D, Y2D, Z2D, zdir='x', offset=-40, cmap=cm.coolwarm)
-        # cset = self.axes.contour(X2D, Y2D, Z2D, zdir='y', offset=40, cmap=cm.coolwarm)
+        cset = self.axes.contour(X2D, Y2D, Z2D, zdir='z', cmap=cm.coolwarm)
+        cset = self.axes.contour(X2D, Y2D, Z2D, zdir='x', cmap=cm.coolwarm)
+        cset = self.axes.contour(X2D, Y2D, Z2D, zdir='y', cmap=cm.coolwarm)
             
         # ax.plot_wireframe(X, Y, Z, rstride=10, cstride=10)
         # self.axes.plot(delta, label="Delta")
