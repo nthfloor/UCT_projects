@@ -16,6 +16,12 @@ then
     git checkout $2
 fi
 
+if [$1 == "-tar" ]
+then
+    tar -cvzf fingpu-gui1.tar.gz *.py
+    echo "compressing files"
+fi
+
 if [ $1 == "-c" ]
 then
     rm *.pyc
