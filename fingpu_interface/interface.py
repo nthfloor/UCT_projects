@@ -340,9 +340,15 @@ class PlotFrame(wx.Frame):
     def onViewLegend(self, event=None):
         if self.viewLegend:
             self.viewLegend = False
+            self.Plot_Data()
         else:
             self.viewLegend = True
-        self.Plot_Data()
+            # Shink current axis by 15%
+            box = self.axes.get_position()
+            self.axes.set_position([box.x0, box.y0, box.width * 0.88, box.height])
+            # Put a legend to the right of the current axis
+            self.axes.legend(loc='center left', bbox_to_anchor=(1, 0.5), prop={'size':8})
+            self.canvas.draw()
 
     def onBasicView(self, event=None):
         self.current_view = 0
@@ -402,7 +408,9 @@ class PlotFrame(wx.Frame):
             self.viewGrid = False
         else:
             self.viewGrid = True
-        self.Plot_Data()
+        for a in self.fig.axes:
+            a.grid(self.viewGrid)
+        self.canvas.draw()
 
     def onExport(self,event=None):
         """ save figure image to file"""
@@ -495,7 +503,7 @@ class PlotFrame(wx.Frame):
 
     def onOptionPrice(self, event=None):
         self.option_price = self.fileReader.getOptionPrice(self.callRadio.GetValue(), 
-            self.optionPriceCheck.IsChecked())
+                self.optionPriceCheck.IsChecked())
         self.Plot_Data()
 
     def onDelta(self, event=None):
@@ -663,8 +671,8 @@ class PlotFrame(wx.Frame):
             self.clearPlots()
             
             self.axes = self.fig.add_subplot(111) # can use add_axes, but then nav-toolbar would not work
-            self.axes.grid(self.viewGrid)
             self.axes.set_xlim(0, 30)
+            self.axes.grid(self.viewGrid)
 
             # plot graphs here
             t = numpy.arange(0, 31, 1)
@@ -709,22 +717,14 @@ class PlotFrame(wx.Frame):
                 else:
                     self.axes.plot(t, self.rho[self.rate_bump], label="Rho")
 
-            if self.viewLegend:
-                # Shink current axis by 15%
-                box = self.axes.get_position()
-                self.axes.set_position([box.x0, box.y0, box.width * 0.88, box.height])
-
-                # Put a legend to the right of the current axis
-                self.axes.legend(loc='center left', bbox_to_anchor=(1, 0.5), prop={'size':8})
-
             self.canvas.draw()
 
     def Plot_Data_advanced(self):
         """ Advanced 2D plotter """
         self.clearPlots()
         self.axes = self.fig.add_subplot(211)
-        self.axes.grid(self.viewGrid)
         self.axes.set_xlim(0, 30)
+        self.axes.grid(self.viewGrid)
 
         t = numpy.arange(0, 31, 1)
         p = []
@@ -817,13 +817,6 @@ class PlotFrame(wx.Frame):
                 else:
                     self.line6, = self.axes2.plot(self.vega[self.volitile_bump], label="Vega")
 
-        if self.viewLegend:
-            # Shink current axis by 15%
-            box = self.axes.get_position()
-            self.axes.set_position([box.x0, box.y0, box.width * 0.85, box.height])
-            # Put a legend to the right of the current axis
-            self.axes.legend(loc='center left', bbox_to_anchor=(1, 0.5), prop={'size':8})
-
         # set useblit True on gtkagg for enhanced performance
         self.span = SpanSelector(self.axes, self.onselect, 'horizontal', useblit=True, rectprops=dict(alpha=0.5, facecolor='red'))
 
@@ -886,7 +879,4 @@ class PlotFrame(wx.Frame):
         self.axes.set_zlabel('Price')
         #~ self.axes.set_zlim(-100, 100)
 
-        if self.viewLegend:
-            self.axes.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
-            # self.axes.legend(bbox_to_anchor=(0., 1.02, 1., .102), loc=3, ncol=1)
         self.canvas.draw()

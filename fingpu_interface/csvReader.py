@@ -73,11 +73,11 @@ class Reader():
         # retrieve input data
         for row in myfile:
             # get stock prices
-            if counter >= 16 and counter <= 46:
+            if counter >= 15 and counter <= 45:
                 self.stock_price_data.append(row[0].split(' ')[1])
 
             # get interest rates
-            if counter >= 47 and counter <= 77:
+            if counter >= 46 and counter <= 76:
                 self.interest_rate_data.append(row[0].split(' ')[1])
 
             counter += 1
