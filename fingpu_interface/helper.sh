@@ -10,7 +10,7 @@ then
     git checkout $2
 fi
 
-if [$1 == "-tar" ]
+if [ $1 == "-tar" ]
 then
     tar -cvzf fingpu-gui1.tar.gz *.py
     echo "compressing files"
