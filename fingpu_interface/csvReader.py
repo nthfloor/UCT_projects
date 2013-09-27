@@ -157,7 +157,7 @@ class Reader():
                         if stock_index < 30:
                             s1 = float(self.stock_price_data[stock_index])
                             s2 = float(self.stock_price_data[stock_index+1])
-                            gamma = gamma*(s2-s1) # calculate delta effect relative to option price
+                            gamma = gamma*(s2-s1) # calculate gamma effect relative to option price
                             if viewDifference:
                                 tempGamma.append(gamma)
                             else:
@@ -174,7 +174,7 @@ class Reader():
                         if stock_index < 30:
                             s1 = float(self.stock_price_data[stock_index])
                             s2 = float(self.stock_price_data[stock_index+1])
-                            greek_value = greek_value*(s2-s1) # calculate delta effect relative to option price
+                            greek_value = greek_value*(s2-s1) # calculate gamma effect relative to option price
                             if viewDifference:
                                 tempGamma.append(greek_value)
                             else:
@@ -196,10 +196,7 @@ class Reader():
                         greek_value = float(call_option[4])
 
                         if stock_index < 30:
-                            s1 = float(self.stock_price_data[stock_index])
-                            s2 = float(self.stock_price_data[stock_index+1])
-                            greek_value = greek_value*(s2-s1) # calculate delta effect relative to option price
-                            #print(stock_index,s1,s2, greek_value, float(call_option[1]))
+                            greek_value = greek_value*0  # In this option price model the volatility does not change, so the effect is zero
                             if viewDifference:
                                 tempVega.append(greek_value)
                             else:
@@ -215,9 +212,7 @@ class Reader():
                         greek_value = float(put_option[4])
 
                         if stock_index < 30:
-                            s1 = float(self.stock_price_data[stock_index])
-                            s2 = float(self.stock_price_data[stock_index+1])
-                            greek_value = greek_value*(s2-s1) # calculate delta effect relative to option price
+                            greek_value = greek_value*(s2-s1)  # In this option price model the volatility does not change, so the effect is zero
                             if viewDifference:
                                 tempVega.append(greek_value)
                             else:
@@ -266,7 +261,7 @@ class Reader():
                         if r_index < 30:
                             s1 = float(self.interest_rate_data[r_index])
                             s2 = float(self.interest_rate_data[r_index+1])
-                            greek_value = greek_value*(s2-s1) # calculate delta effect relative to option price
+                            greek_value = greek_value*(s2-s1) # calculate rho effect relative to option price
                             if viewDifference:
                                 tempRho.append(greek_value)
                             else:
@@ -283,7 +278,7 @@ class Reader():
                         if r_index < 30:
                             s1 = float(self.interest_rate_data[r_index])
                             s2 = float(self.interest_rate_data[r_index+1])
-                            greek_value = greek_value*(s2-s1) # calculate delta effect relative to option price
+                            greek_value = greek_value*(s2-s1) # calculate rho effect relative to option price
                             if viewDifference:
                                 tempRho.append(greek_value)
                             else:

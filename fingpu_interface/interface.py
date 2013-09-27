@@ -208,14 +208,14 @@ class PlotFrame(wx.Frame):
 
         # adds border around sliders to group related widgets
         self.vboxOptions.AddSpacer(10)
-        self.sliderBorder = wx.StaticBoxSizer(wx.StaticBox(self.panel, -1, 'Sliders'), orient=wx.VERTICAL)
+        self.sliderStaticBox = wx.StaticBox(self.panel, -1, 'Sliders')
+        self.sliderBorder = wx.StaticBoxSizer(self.sliderStaticBox, orient=wx.VERTICAL)
         self.flexiGridSizer.AddMany([(self.stockSlider_label), (self.stockSlider, 1, wx.ALL), 
             (self.rateSlider_label), (self.rateSlider, 1, wx.EXPAND),
             (self.volatilSlider_label), (self.volatilSlider, 1, wx.EXPAND),
             (self.timeStepSlider_label), (self.timeStepSlider, 1, wx.EXPAND)])
         self.sliderBorder.Add(self.flexiGridSizer, 1, wx.ALL, 5)
         self.vboxOptions.Add(self.sliderBorder, 0, flag=wx.ALIGN_LEFT|wx.ALL)
-        
 
         # add border for type of option price
         self.optionsBorder = wx.StaticBoxSizer(wx.StaticBox(self.panel, -1, 'Option Price'), orient=wx.VERTICAL)
@@ -352,6 +352,8 @@ class PlotFrame(wx.Frame):
 
     def onAdvanced3DView(self, event=None):
         self.current_view = 2
+        self.sliderBorder.Show(self.sliderStaticBox, False)
+        self.panel.GetSizer().Layout()
         self.Plot_Data()
 
     def onPrinterSetup(self,event=None):
@@ -645,6 +647,7 @@ class PlotFrame(wx.Frame):
             
             self.axes = self.fig.add_subplot(111) # can use add_axes, but then nav-toolbar would not work
             self.axes.grid(self.viewGrid)
+            self.axes.set_xlim(0, 30)
 
             # plot graphs here
             t = numpy.arange(0, 31, 1)
@@ -704,6 +707,7 @@ class PlotFrame(wx.Frame):
         self.clearPlots()
         self.axes = self.fig.add_subplot(211)
         self.axes.grid(self.viewGrid)
+        self.axes.set_xlim(0, 30)
 
         t = numpy.arange(0, 31, 1)
         p = []
@@ -818,47 +822,52 @@ class PlotFrame(wx.Frame):
 
         t = numpy.arange(0, 31, 1)
         b = numpy.arange(0, 9, 1)
-        # p = map(float, self.option_price)
-        p = [[float(string) for string in inner] for inner in self.option_price]
         X2D, Y2D = numpy.meshgrid(t, b)
-        # Z2D = numpy.reshape(t,(len(X2D[:,0]),len(X2D[0,:])))
-        Z2D = p
-
-        #~ print(X2D)
-        #~ print('')
-        #~ print(Y2D)
-        #~ print('')
-        #~ print(Z2D)
         
-        surf = self.axes.plot_surface(X2D, Y2D, Z2D, rstride=8, cstride=8, linewidth=0,
-            antialiased=False, cmap=cm.coolwarm, alpha=0.3)
-        self.fig.colorbar(surf, shrink=0.5, aspect=5)
+        # plot option price surface
+        if len(self.option_price) > 0:
+            Z2D = [[float(string) for string in inner] for inner in self.option_price]            
+            surf = self.axes.plot_surface(X2D, Y2D, Z2D, rstride=1, cstride=1,
+                antialiased=False, alpha=0.5, cmap=cm.afmhot)  #cm.coolwarm
+            cbar = self.fig.colorbar(surf, shrink=0.5, aspect=5)
+            cbar.set_label('Option Proce', rotation=90)
 
+        # plot greek surfaces
+        if len(self.delta) > 0:
+            Z2D = [[float(string) for string in inner] for inner in self.delta]
+            self.axes.plot_surface(X2D, Y2D, Z2D, rstride=1, cstride=1,
+                antialiased=False, alpha=0.5, color='b')
+
+        if len(self.gamma) > 0:
+            Z2D = [[float(string) for string in inner] for inner in self.gamma]
+            self.axes.plot_surface(X2D, Y2D, Z2D, rstride=1, cstride=1,
+                antialiased=False, alpha=0.5, color='c')
+                
+        if len(self.theta) > 0:
+            Z2D = [[float(string) for string in inner] for inner in self.theta]
+            self.axes.plot_surface(X2D, Y2D, Z2D, rstride=1, cstride=1,
+                antialiased=False, alpha=0.5, color='r')
+                
+        if len(self.rho) > 0:
+            Z2D = [[float(string) for string in inner] for inner in self.rho]
+            self.axes.plot_surface(X2D, Y2D, Z2D, rstride=1, cstride=1,
+                antialiased=False, alpha=0.5, color='m')
+                
+        if len(self.vega) > 0:
+            Z2D = [[float(string) for string in inner] for inner in self.vega]
+            self.axes.plot_surface(X2D, Y2D, Z2D, rstride=1, cstride=1,
+                antialiased=False, alpha=0.5, color='g')
         
-        #~ print(X2D, Y2D, Z2D)
-        cset = self.axes.contour(X2D, Y2D, Z2D, zdir='z', cmap=cm.coolwarm)
-        cset = self.axes.contour(X2D, Y2D, Z2D, zdir='x', cmap=cm.coolwarm)
-        cset = self.axes.contour(X2D, Y2D, Z2D, zdir='y', cmap=cm.coolwarm)
-            
-        # ax.plot_wireframe(X, Y, Z, rstride=10, cstride=10)
-        # self.axes.plot(delta, label="Delta")
-        # print(self.option_price)
-        # self.axes.plot(self.gamma, label="Gamma")
-        # self.axes.plot(self.vega, label="Vega")
-        # self.axes.plot(self.theta, label="Theta")
-        # self.axes.plot(self.rho, label="Rho")
-        # X, Y, Z = axes3d.get_test_data(0.05)
-        # self.axes.plot_surface(X, Y, Z, rstride=8, cstride=8, alpha=0.3)
-        # cset = self.axes.contour(X, Y, Z, zdir='z', offset=-100, cmap=cm.coolwarm)
-        # cset = self.axes.contour(X, Y, Z, zdir='x', offset=-40, cmap=cm.coolwarm)
-        # cset = self.axes.contour(X, Y, Z, zdir='y', offset=40, cmap=cm.coolwarm)
+        #~ cset = self.axes.contour(X2D, Y2D, Z2D, zdir='z', offset=0, cmap=cm.coolwarm)
+        #cset = self.axes.contour(X2D, Y2D, Z2D, zdir='x', offset=0, cmap=cm.coolwarm)
+        #cset = self.axes.contour(X2D, Y2D, Z2D, zdir='y', offset=8, cmap=cm.coolwarm)
 
-        self.axes.set_xlabel('X')
-        # self.axes.set_xlim(-40, 40)
-        self.axes.set_ylabel('Y')
-        # self.axes.set_ylim(-40, 40)
-        self.axes.set_zlabel('Z')
-        # self.axes.set_zlim(-100, 100)
+        self.axes.set_xlabel('Time (Days)')
+        self.axes.set_xlim(0, 35)
+        self.axes.set_ylabel('Bump Size')
+        #~ self.axes.set_ylim(-3, 8)
+        self.axes.set_zlabel('Price')
+        #~ self.axes.set_zlim(-100, 100)
 
         if self.viewLegend:
             self.axes.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
