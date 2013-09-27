@@ -6,6 +6,16 @@
 #     echo "msg here"
 # fi
 
+if [ $1 == "-m" ]
+then
+    echo "merging with master"
+    git commit -a
+    git checkout master
+    git merge $2
+    git push
+    git checkout $2
+fi
+
 if [ $1 == "-c" ]
 then
     rm *.pyc
