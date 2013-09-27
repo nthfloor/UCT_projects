@@ -148,20 +148,21 @@ class PlotFrame(wx.Frame):
         self.axes = self.fig.add_subplot(111)
 
         # setup slider-widgets for controlling GUI
-        self.stockSlider_label = wx.StaticText(self.panel, -1, "Stock Price: ")
-        self.stockSlider = wx.Slider(self.panel, value=5, minValue=1, maxValue=9, 
+        self.sliderPanel = wx.Panel(self.panel)
+        self.stockSlider_label = wx.StaticText(self.sliderPanel, -1, "Stock Price: ")
+        self.stockSlider = wx.Slider(self.sliderPanel, value=5, minValue=1, maxValue=9, 
             pos=(20, 20), size=(100,-1), style=wx.SL_HORIZONTAL|wx.SL_AUTOTICKS)
         self.stockSlider.SetTickFreq(9, 1)
-        self.rateSlider_label = wx.StaticText(self.panel, -1, "Interest Rate: ")
-        self.rateSlider = wx.Slider(self.panel, value=5, minValue=1, maxValue=9, 
+        self.rateSlider_label = wx.StaticText(self.sliderPanel, -1, "Interest Rate: ")
+        self.rateSlider = wx.Slider(self.sliderPanel, value=5, minValue=1, maxValue=9, 
             pos=(20, 20), size=(100,-1), style=wx.SL_HORIZONTAL|wx.SL_AUTOTICKS)
         self.rateSlider.SetTickFreq(9, 1)
-        self.volatilSlider_label = wx.StaticText(self.panel, -1, "Volatility: ")
-        self.volatilSlider = wx.Slider(self.panel, value=5, minValue=1, maxValue=9, 
+        self.volatilSlider_label = wx.StaticText(self.sliderPanel, -1, "Volatility: ")
+        self.volatilSlider = wx.Slider(self.sliderPanel, value=5, minValue=1, maxValue=9, 
             pos=(20, 20), size=(100,-1), style=wx.SL_HORIZONTAL|wx.SL_AUTOTICKS)
         self.volatilSlider.SetTickFreq(9, 1)
-        self.timeStepSlider_label = wx.StaticText(self.panel, -1, "Time Step: ")
-        self.timeStepSlider = wx.Slider(self.panel, value=5, minValue=1, maxValue=9, 
+        self.timeStepSlider_label = wx.StaticText(self.sliderPanel, -1, "Time Step: ")
+        self.timeStepSlider = wx.Slider(self.sliderPanel, value=5, minValue=1, maxValue=9, 
             pos=(20, 20), size=(100,-1), style=wx.SL_HORIZONTAL|wx.SL_AUTOTICKS)
         self.timeStepSlider.SetTickFreq(9, 1)
 
@@ -208,14 +209,15 @@ class PlotFrame(wx.Frame):
 
         # adds border around sliders to group related widgets
         self.vboxOptions.AddSpacer(10)
-        self.sliderStaticBox = wx.StaticBox(self.panel, -1, 'Sliders')
+        self.sliderStaticBox = wx.StaticBox(self.sliderPanel, -1, 'Sliders')
         self.sliderBorder = wx.StaticBoxSizer(self.sliderStaticBox, orient=wx.VERTICAL)
         self.flexiGridSizer.AddMany([(self.stockSlider_label), (self.stockSlider, 1, wx.ALL), 
             (self.rateSlider_label), (self.rateSlider, 1, wx.EXPAND),
             (self.volatilSlider_label), (self.volatilSlider, 1, wx.EXPAND),
             (self.timeStepSlider_label), (self.timeStepSlider, 1, wx.EXPAND)])
         self.sliderBorder.Add(self.flexiGridSizer, 1, wx.ALL, 5)
-        self.vboxOptions.Add(self.sliderBorder, 0, flag=wx.ALIGN_LEFT|wx.ALL)
+        self.sliderPanel.SetSizer(self.sliderBorder)
+        self.vboxOptions.Add(self.sliderPanel, 0, flag=wx.ALIGN_LEFT|wx.ALL)
 
         # add border for type of option price
         self.optionsBorder = wx.StaticBoxSizer(wx.StaticBox(self.panel, -1, 'Option Price'), orient=wx.VERTICAL)
@@ -344,16 +346,29 @@ class PlotFrame(wx.Frame):
 
     def onBasicView(self, event=None):
         self.current_view = 0
+        
+        # show sliders panel
+        self.sliderPanel.Show()
+        self.panel.Layout()
+        
         self.Plot_Data()
 
     def onAdvancedView(self, event=None):
         self.current_view = 1
+        
+        # show sliders panel
+        self.sliderPanel.Show()
+        self.panel.Layout()
+        
         self.Plot_Data()
 
     def onAdvanced3DView(self, event=None):
         self.current_view = 2
-        self.sliderBorder.Show(self.sliderStaticBox, False)
-        self.panel.GetSizer().Layout()
+        
+        # hide slider panel since will not be used
+        self.sliderPanel.Hide()
+        self.panel.Layout()
+        
         self.Plot_Data()
 
     def onPrinterSetup(self,event=None):
@@ -420,8 +435,10 @@ class PlotFrame(wx.Frame):
 
         if dlg.ShowModal() == wx.ID_OK:
             path = dlg.GetPath()
+            projectDir = path.rsplit('/', 1)[0]
+            
             # this also involves reading in all the data
-            self.time_span = self.fileReader.loadSettingsFile(path, thisdir, self.statusbar)
+            self.time_span = self.fileReader.loadSettingsFile(path, projectDir, self.statusbar)
             print('Opened settings file at %s' % path)
         else:
             dlg = wx.MessageDialog(self, "Failed to import the correct settings file.", "Complication", wx.OK | wx.ICON_ERROR)

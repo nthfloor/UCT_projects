@@ -17,6 +17,7 @@ class Reader():
 
     def loadSettingsFile(self, filename, path, statusBar):
         self.data_path = ''.join(path+'/')
+        #~ print(self.data_path)
         myfile = open(filename, "rb")
 
         # reads in number input and output files
