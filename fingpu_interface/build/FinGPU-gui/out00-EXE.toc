@@ -1,4 +1,4 @@
-('/home/nathanf/Repo/uct_projects/fingpu_interface/dist/FinGPU-gui',
+('/home/nathanf/Repo/uct_projects/fingpu_interface/FinGPU-gui',
  True,
  False,
  None,
@@ -6,4 +6,4 @@
  [],
  None,
  False,
- 1380288935)
+ 1380291346)

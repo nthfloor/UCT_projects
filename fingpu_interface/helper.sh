@@ -18,9 +18,15 @@ then
     python runapp.py
 fi
 
-if [ $1 == "-b" ]
+if [ $1 == "-o" ]
 then
     echo "building executable"
-    ~/programs/PyInstaller-2.1/pyinstaller.py --distpath=~/Repo/uct_projects/fingpu_interface/dist -n FinGPU-gui -F runapp.py
+    ~/programs/PyInstaller-2.1/pyinstaller.py --distpath=~/Repo/uct_projects/fingpu_interface -n FinGPU-gui -F runapp.py
+fi
+
+if [ $1 == "-d" ]
+then
+   echo "One Directory"
+   ~/programs/PyInstaller-2.1/pyinstaller.py --distpath=~/Repo/uct_projects/fingpu_interface/dist -n FinGPU-gui runapp.py
 fi
 
