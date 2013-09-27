@@ -18,3 +18,9 @@ then
     python runapp.py
 fi
 
+if [ $1 == "-b" ]
+then
+    echo "building executable"
+    ~/programs/PyInstaller-2.1/pyinstaller.py --distpath=~/Repo/uct_projects/fingpu_interface/dist -n FinGPU-gui -F runapp.py
+fi
+

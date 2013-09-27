@@ -1,0 +1,9 @@
+('/home/nathanf/Repo/uct_projects/fingpu_interface/dist/FinGPU-gui',
+ True,
+ False,
+ None,
+ None,
+ [],
+ None,
+ False,
+ 1380288935)
