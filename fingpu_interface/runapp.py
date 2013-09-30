@@ -4,6 +4,7 @@ import wx
 import interface
 
 if __name__ == '__main__':
+    print 'Program started...'
     app = wx.PySimpleApp()
     fig = interface.PlotFrame()
     fig.Show(True)

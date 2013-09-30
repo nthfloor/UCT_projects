@@ -174,6 +174,7 @@ class PlotFrame(wx.Frame):
         # setup options-widgets for controlling graphs
         self.callRadio = wx.RadioButton(self.panel, label="Call options", pos=(10, 10))
         self.putRadio = wx.RadioButton(self.panel, label="Put options", pos=(10, 30))
+        self.callRadio.SetValue(True)        
         self.spaceKeeper = wx.StaticText(self.panel, -1, '')
         self.optionPriceCheck = wx.CheckBox(self.panel, label="Option Price", pos=(20, 20))
         self.deltaCheck = wx.CheckBox(self.panel, label="Delta", pos=(20, 20))
@@ -443,7 +444,8 @@ class PlotFrame(wx.Frame):
 
         if dlg.ShowModal() == wx.ID_OK:
             path = dlg.GetPath()
-            projectDir = path.rsplit('/', 1)[0]
+            #projectDir = path.rsplit('/', 1)[0]
+            projectDir = path.rsplit('\\', 1)[0]
             
             # this also involves reading in all the data
             self.time_span = self.fileReader.loadSettingsFile(path, projectDir, self.statusbar)
@@ -716,6 +718,12 @@ class PlotFrame(wx.Frame):
                     self.axes.fill_between(t, p, s, where=s<=p, facecolor='white', interpolate=True)
                 else:
                     self.axes.plot(t, self.rho[self.rate_bump], label="Rho")
+            if self.viewLegend:
+                # Shink current axis by 15%
+                box = self.axes.get_position()
+                self.axes.set_position([box.x0, box.y0, box.width * 0.88, box.height])
+                # Put a legend to the right of the current axis
+                self.axes.legend(loc='center left', bbox_to_anchor=(1, 0.5), prop={'size':8})
 
             self.canvas.draw()
 
@@ -773,8 +781,13 @@ class PlotFrame(wx.Frame):
         self.axes2.grid(self.viewGrid)
         if self.viewFill:
             p = self.option_price_fill
-        if len(self.time_span_fill) < 0:
+        if len(self.time_span_fill) <= 0:
             self.time_span_fill = t
+        if len(self.option_price_fill) <= 0:
+            self.option_price_fill = numpy.array(map(float, self.option_price[self.stock_bump]))
+        if len(self.delta_fill) <= 0:
+            self.delta_fill = numpy.array(map(float, self.delta[self.stock_bump]))            
+                        
         if True:
             if len(self.option_price) > 0:
                 if self.viewFill:
@@ -819,6 +832,13 @@ class PlotFrame(wx.Frame):
 
         # set useblit True on gtkagg for enhanced performance
         self.span = SpanSelector(self.axes, self.onselect, 'horizontal', useblit=True, rectprops=dict(alpha=0.5, facecolor='red'))
+        
+        if self.viewLegend:
+                # Shink current axis by 15%
+                box = self.axes.get_position()
+                self.axes.set_position([box.x0, box.y0, box.width * 0.88, box.height])
+                # Put a legend to the right of the current axis
+                self.axes.legend(loc='center left', bbox_to_anchor=(1, 0.5), prop={'size':8})
 
         self.canvas.draw()
 

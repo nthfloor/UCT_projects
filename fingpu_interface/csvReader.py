@@ -16,8 +16,10 @@ class Reader():
         self.interest_rate_data = []
 
     def loadSettingsFile(self, filename, path, statusBar):
-        self.data_path = ''.join(path+'/')
-        #~ print(self.data_path)
+        #self.data_path = ''.join(path+'/')
+        self.data_path = ''.join(path+'\\')
+        
+        # print(self.data_path)
         myfile = open(filename, "rb")
 
         # reads in number input and output files
@@ -213,7 +215,7 @@ class Reader():
                         greek_value = float(put_option[4])
 
                         if stock_index < 30:
-                            greek_value = greek_value*(s2-s1)  # In this option price model the volatility does not change, so the effect is zero
+                            greek_value = greek_value*0  # In this option price model the volatility does not change, so the effect is zero
                             if viewDifference:
                                 tempVega.append(greek_value)
                             else:

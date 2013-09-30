@@ -11,4 +11,14 @@ The external library, Matplotlib was used to graph the data. It functions much t
 An executable has been provided for users who prefer not to run the .py file.
 The executable has been created by pyinstaller.
 
+### Installation
+
+Prerequisites:
+#### Linux
+    Install matplotlib, numpy and wxPython:
+    
+#### Windows
+    Install Canopy
+    
+For either operating system, you will need to then clone the github repository:
 
