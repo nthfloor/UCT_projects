@@ -16,8 +16,8 @@ class Reader():
         self.interest_rate_data = []
 
     def loadSettingsFile(self, filename, path, statusBar):
-        #self.data_path = ''.join(path+'/')
-        self.data_path = ''.join(path+'\\')
+        self.data_path = ''.join(path+'/')
+        #self.data_path = ''.join(path+'\\')
         
         # print(self.data_path)
         myfile = open(filename, "rb")
