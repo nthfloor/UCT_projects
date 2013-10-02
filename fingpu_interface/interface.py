@@ -85,7 +85,7 @@ class PlotFrame(wx.Frame):
         self.Build_Panel()
         self.statusbar = self.CreateStatusBar()
         self.Plot_Data()
-        self.SetSize(size=(830, 480))
+        self.SetSize(size=(830, 540))
 
     # on span-selection of graph
     def onselect(self, xmin, xmax):
@@ -195,7 +195,7 @@ class PlotFrame(wx.Frame):
         self.timeStepSlider_label = wx.StaticText(self.sliderPanel, -1, "Time Step: ")
         self.timeStepSlider = wx.Slider(self.sliderPanel, value=5, minValue=1, maxValue=9, 
             pos=(20, 20), size=(100,-1), style=wx.SL_HORIZONTAL|wx.SL_AUTOTICKS)
-        self.timeStepSlider.SetTickFreq(2, 1)
+        self.timeStepSlider.SetTickFreq(1, 1)
 
         self.Bind(wx.EVT_SLIDER, self.onStockSlider, self.stockSlider)
         self.Bind(wx.EVT_SLIDER, self.onRateSlider, self.rateSlider)
@@ -213,7 +213,9 @@ class PlotFrame(wx.Frame):
         self.rhoCheck = wx.CheckBox(self.panel, label="Rho", pos=(20, 20))
         self.thetaCheck = wx.CheckBox(self.panel, label="Theta", pos=(20, 20))
         self.vegaCheck = wx.CheckBox(self.panel, label="Vega", pos=(20, 20))
+        self.risidualCheck = wx.CheckBox(self.panel, label="Show Risidual", pos=(20, 20))
         self.differenceCheck = wx.CheckBox(self.panel, label="Show Difference", pos=(20, 20))
+        self.effectCheck = wx.CheckBox(self.panel, label="Show Greek's effect on option price", pos=(20, 20))
 
         self.Bind(wx.EVT_RADIOBUTTON, self.onCallRadio, self.callRadio)
         self.Bind(wx.EVT_RADIOBUTTON, self.onPutRadio, self.putRadio)
@@ -223,7 +225,9 @@ class PlotFrame(wx.Frame):
         self.Bind(wx.EVT_CHECKBOX, self.onRho, self.rhoCheck)
         self.Bind(wx.EVT_CHECKBOX, self.onTheta, self.thetaCheck)
         self.Bind(wx.EVT_CHECKBOX, self.onVega, self.vegaCheck)
+        self.Bind(wx.EVT_CHECKBOX, self.onRisidual, self.risidualCheck)
         self.Bind(wx.EVT_CHECKBOX, self.onDifferenceCheck, self.differenceCheck)
+        self.Bind(wx.EVT_CHECKBOX, self.onShowEffects, self.effectCheck)
 
         # Create the navigation toolbar, tied to the canvas
         self.toolbar = NavigationToolbar(self.canvas)
@@ -241,7 +245,7 @@ class PlotFrame(wx.Frame):
 
         # adds border around sliders to group related widgets
         self.vboxOptions.AddSpacer(10)
-        self.sliderStaticBox = wx.StaticBox(self.sliderPanel, -1, 'Sliders')
+        self.sliderStaticBox = wx.StaticBox(self.sliderPanel, -1, 'Bump Sliders')
         self.sliderBorder = wx.StaticBoxSizer(self.sliderStaticBox, orient=wx.VERTICAL)
         self.flexiGridSizer.AddMany([(self.stockSlider_label), (self.stockSlider, 1, wx.ALL), 
             (self.rateSlider_label), (self.rateSlider, 1, wx.EXPAND),
@@ -252,7 +256,7 @@ class PlotFrame(wx.Frame):
         self.vboxOptions.Add(self.sliderPanel, 0, flag=wx.ALIGN_LEFT|wx.ALL)
 
         # add border for type of option price
-        self.optionsBorder = wx.StaticBoxSizer(wx.StaticBox(self.panel, -1, 'Option Price'), orient=wx.VERTICAL)
+        self.optionsBorder = wx.StaticBoxSizer(wx.StaticBox(self.panel, -1, 'Option Price Type'), orient=wx.VERTICAL)
         self.flexiOptions = wx.FlexGridSizer(2, 1, 3, 10)
         self.flexiOptions.AddMany([(self.callRadio, 1, wx.EXPAND), 
             (self.putRadio, 1, wx.EXPAND)])            
@@ -260,7 +264,7 @@ class PlotFrame(wx.Frame):
         self.vboxOptions.Add(self.optionsBorder, 1, flag=wx.ALIGN_LEFT|wx.ALL|wx.GROW)
         
         # add border for greeks
-        self.greekOptionsBorder = wx.StaticBoxSizer(wx.StaticBox(self.panel, -1, 'Options'), orient=wx.VERTICAL)
+        self.greekOptionsBorder = wx.StaticBoxSizer(wx.StaticBox(self.panel, -1, 'Greek Options'), orient=wx.VERTICAL)
         self.flexiOptions2 = wx.FlexGridSizer(7, 1, 3, 10)
         self.flexiOptions2.AddMany([(self.optionPriceCheck, 1, wx.EXPAND), (self.deltaCheck, 1, wx.EXPAND), (self.gammaCheck, 1, wx.EXPAND), 
             (self.rhoCheck, 1, wx.EXPAND), (self.thetaCheck, 1, wx.EXPAND), (self.vegaCheck, 1, wx.EXPAND)])
@@ -269,9 +273,9 @@ class PlotFrame(wx.Frame):
         #self.vboxOptions.AddSpacer(5)
         
         # add border for other checkable options
-        self.otherOptionsBorder = wx.StaticBoxSizer(wx.StaticBox(self.panel, -1, 'Options'), orient=wx.VERTICAL)
-        self.flexiOptions3 = wx.FlexGridSizer(1, 1, 3, 10)
-        self.flexiOptions3.AddMany([(self.differenceCheck, 1, wx.EXPAND)])
+        self.otherOptionsBorder = wx.StaticBoxSizer(wx.StaticBox(self.panel, -1, 'Extra Options'), orient=wx.VERTICAL)
+        self.flexiOptions3 = wx.FlexGridSizer(3, 1, 3, 10)
+        self.flexiOptions3.AddMany([(self.risidualCheck, 1, wx.EXPAND), (self.differenceCheck, 1, wx.EXPAND), (self.effectCheck, 1, wx.EXPAND)])
         self.otherOptionsBorder.Add(self.flexiOptions3, 1, wx.ALL, 5)
         self.vboxOptions.Add(self.otherOptionsBorder, 0, flag=wx.ALIGN_LEFT|wx.ALL|wx.GROW)
         self.vboxOptions.AddSpacer(5)
@@ -480,6 +484,9 @@ class PlotFrame(wx.Frame):
             
             # this also involves reading in all the data
             self.number_bumps = self.fileReader.loadSettingsFile(path, projectDir, self.statusbar)
+
+            # change slider range to mach number of bumps just read in TODO
+
             print('Opened settings file at %s' % path)
         else:
             dlg = wx.MessageDialog(self, "Failed to import the correct settings file.", "Complication", wx.OK | wx.ICON_ERROR)
@@ -564,6 +571,12 @@ class PlotFrame(wx.Frame):
             self.vegaCheck.IsChecked(), self.differenceCheck.IsChecked())
         self.Plot_Data()
 
+    def onRisidual(self, event=None):
+        pass
+
+    def onShowEffects(self, event=None):
+        pass # TODO
+
     def onDifferenceCheck(self, event=None):
         if self.showDifference:
             self.showDifference = False
@@ -584,105 +597,25 @@ class PlotFrame(wx.Frame):
         self.Plot_Data()
 
     def onStockSlider(self, event=None):
-        temp = 0
-        if self.stockSlider.GetValue() == 1:
-            temp = 7
-        elif self.stockSlider.GetValue() == 2:
-            temp = 14
-        elif self.stockSlider.GetValue() == 3:
-            temp = 21
-        elif self.stockSlider.GetValue() == 4:
-            temp = 28
-        elif self.stockSlider.GetValue() == 5:
-            temp = 35
-        elif self.stockSlider.GetValue() == 6:
-            temp = 42
-        elif self.stockSlider.GetValue() == 7:
-            temp = 49
-        elif self.stockSlider.GetValue() == 8:
-            temp = 56
-        elif self.stockSlider.GetValue() == 9:
-            temp = 63
-
-        self.statusbar.SetStatusText("Stock price bump: "+str(temp))
+        self.statusbar.SetStatusText("Stock price bump: "+str(self.stockSlider.GetValue()))
         # print(self.stockSlider.GetValue()-1)
         self.stock_bump = self.stockSlider.GetValue()-1
         self.Plot_Data()
 
     def onRateSlider(self, event=None):
-        temp = 0
-        if self.rateSlider.GetValue() == 1:
-            temp = 0.001
-        elif self.rateSlider.GetValue() == 2:
-            temp = 0.002
-        elif self.rateSlider.GetValue() == 3:
-            temp = 0.003
-        elif self.rateSlider.GetValue() == 4:
-            temp = 0.004
-        elif self.rateSlider.GetValue() == 5:
-            temp = 0.005
-        elif self.rateSlider.GetValue() == 6:
-            temp = 0.006
-        elif self.rateSlider.GetValue() == 7:
-            temp = 0.007
-        elif self.rateSlider.GetValue() == 8:
-            temp = 0.008
-        elif self.rateSlider.GetValue() == 9:
-            temp = 0.009
-
-        self.statusbar.SetStatusText("Interest Rate bump: "+str(temp))
+        self.statusbar.SetStatusText("Interest Rate bump: "+str(self.rateSlider.GetValue()))
         # print(self.stockSlider.GetValue()-1)
         self.rate_bump = self.rateSlider.GetValue()-1
         self.Plot_Data()
 
     def onVolatilSlider(self, event=None):
-        temp = 0
-        if self.volatilSlider.GetValue() == 1:
-            temp = 0.004
-        elif self.volatilSlider.GetValue() == 2:
-            temp = 0.008
-        elif self.volatilSlider.GetValue() == 3:
-            temp = 0.012
-        elif self.volatilSlider.GetValue() == 4:
-            temp = 0.016
-        elif self.volatilSlider.GetValue() == 5:
-            temp = 0.02
-        elif self.volatilSlider.GetValue() == 6:
-            temp = 0.024
-        elif self.volatilSlider.GetValue() == 7:
-            temp = 0.028
-        elif self.volatilSlider.GetValue() == 8:
-            temp = 0.032
-        elif self.volatilSlider.GetValue() == 9:
-            temp = 0.036
-
-        self.statusbar.SetStatusText("Volatility bump: "+str(temp))
+        self.statusbar.SetStatusText("Volatility bump: "+str(self.volatilSlider.GetValue()))
         # print(self.stockSlider.GetValue()-1)
         self.volitile_bump = self.volatilSlider.GetValue()-1
         self.Plot_Data()
 
     def ontimeStepSlider(self, event=None):
-        temp = 0
-        if self.timeStepSlider.GetValue() == 1:
-            temp = 0.002
-        elif self.timeStepSlider.GetValue() == 2:
-            temp = 0.004
-        elif self.timeStepSlider.GetValue() == 3:
-            temp = 0.006
-        elif self.timeStepSlider.GetValue() == 4:
-            temp = 0.08
-        elif self.timeStepSlider.GetValue() == 5:
-            temp = 0.01
-        elif self.timeStepSlider.GetValue() == 6:
-            temp = 0.012
-        elif self.timeStepSlider.GetValue() == 7:
-            temp = 0.014
-        elif self.timeStepSlider.GetValue() == 8:
-            temp = 0.016
-        elif self.timeStepSlider.GetValue() == 9:
-            temp = 0.018
-
-        self.statusbar.SetStatusText("Time step bump: "+str(temp))
+        self.statusbar.SetStatusText("Time step bump: "+str(self.timeStepSlider.GetValue()))
         # print(self.stockSlider.GetValue()-1)
         self.time_bump = self.timeStepSlider.GetValue()-1
         self.Plot_Data()
