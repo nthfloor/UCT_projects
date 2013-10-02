@@ -59,7 +59,6 @@ class PlotFrame(wx.Frame):
 
         # initialise data arrays
         self.option_price = []
-        self.time_span = []
         self.delta = []
         self.gamma = []
         self.vega = []
@@ -480,7 +479,7 @@ class PlotFrame(wx.Frame):
             #projectDir = path.rsplit('\\', 1)[0]
             
             # this also involves reading in all the data
-            self.time_span = self.fileReader.loadSettingsFile(path, projectDir, self.statusbar)
+            self.fileReader.loadSettingsFile(path, projectDir, self.statusbar)
             print('Opened settings file at %s' % path)
         else:
             dlg = wx.MessageDialog(self, "Failed to import the correct settings file.", "Complication", wx.OK | wx.ICON_ERROR)
@@ -903,9 +902,8 @@ class PlotFrame(wx.Frame):
         self.axes = self.fig.add_subplot(111, projection='3d') # can use add_axes, but then nav-toolbar would not work
         self.axes.grid(self.viewGrid)
 
-        t = numpy.arange(0, 31, 1)
         b = numpy.arange(0, 9, 1)
-        X2D, Y2D = numpy.meshgrid(t, b)
+        X2D, Y2D = numpy.meshgrid(self.time, b)
         
         # plot option price surface
         if len(self.option_price) > 0:
