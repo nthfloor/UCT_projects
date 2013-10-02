@@ -24,24 +24,31 @@ from matplotlib import cm
 
 class PlotFrame(wx.Frame):
     help_msg="""  Menus for
-     Save           export figure (png, jpg) to file
-     Open           import csv file of option prices
-     Copy           copy bitmap of figure to the system clipboard
-     Print Setup    setup size of figure for printing
-     Print Preview  preview printer page
-     Print          send figure to a system printer
-     Exit           end application
+     Import...import project settings file
+     Export...export figure (png, jpg) to file
+     Print Setup...setup size of figure for printing
+     Print Preview...preview printer page
+     Print...send figure to a system printer
+     Exit...end application
+
+     Basic-2D...View basic 2D representation of data
+     Advanced-2D...View 2D representation (with span selection control)
+     Advanced-3D...View 3D representation of data
+
+     View-Grid...Toggle grid
+     View-Legend...Toggle legend
+     View-Fill...Toggle fill representation of data (only for 2D)
 
      where 'figure' means an image of the matplotlib canvas
 
-      In addition, "Ctrl-C" is bound to copy-figure-to-clipboard    
+     In addition, "Ctrl-C" is bound to copy-figure-to-clipboard    
     """
 
-    start_msg= """        Use Menus to test printing
-        or Ctrl-C to copy plot image to clipboard  """
+    about_msg="""
+        Option_price_visualisation v0.1  29-Aug-2013
 
-    about_msg="""        option_price_visual v0.1  29-Aug-2013
-        Nathan Floor, flrnat001@cs.uct.ac.za"""
+        Nathan Floor, flrnat001@cs.uct.ac.za
+    """
 
     def __init__(self):
         wx.Frame.__init__(self, None, -1, "Visualise Option Prices and Greeks", size=(300, 500))
@@ -321,6 +328,7 @@ class PlotFrame(wx.Frame):
         MENU_LEGEND = wx.NewId()
         MENU_3D = wx.NewId()
         MENU_FILL = wx.NewId()
+        MENU_ABOUT = wx.NewId()
 
         menuBar = wx.MenuBar()
 
@@ -356,7 +364,8 @@ class PlotFrame(wx.Frame):
         menuBar.Append(f2, "&Tools")
 
         f3 = wx.Menu()
-        f3.Append(MENU_HELP, "Quick Reference",  "Quick Reference")
+        f3.Append(MENU_HELP, "&Quick Reference",  "Quick Reference")
+        f3.Append(MENU_ABOUT, "&About",  "About this interface")
         menuBar.Append(f3, "&Help")
 
         self.SetMenuBar(menuBar)
@@ -371,6 +380,7 @@ class PlotFrame(wx.Frame):
         self.Bind(wx.EVT_MENU, self.onViewGrid,     id=MENU_VIEW_GRID)
         self.Bind(wx.EVT_MENU, self.onViewLegend,     id=MENU_LEGEND)
         self.Bind(wx.EVT_MENU, self.onHelp,         id=MENU_HELP)
+        self.Bind(wx.EVT_MENU, self.onAbout,         id=MENU_ABOUT)
         self.Bind(wx.EVT_MENU, self.onBasicView,    id=MENU_BASIC)
         self.Bind(wx.EVT_MENU, self.onAdvancedView, id=MENU_ADVANCE)
         self.Bind(wx.EVT_MENU, self.onAdvanced3DView, id=MENU_3D)
@@ -444,9 +454,16 @@ class PlotFrame(wx.Frame):
 
         if (event.ControlDown() and chr(key)=='C'): # Ctrl-C
             self.onClipboard(event=event)
+        if (event.ControlDown() and chr(key)=='P'): # Ctrl-P
+            self.onPrinterPreview(event=event)
 
     def onHelp(self, event=None):
         dlg = wx.MessageDialog(self, self.help_msg, "Quick Reference", wx.OK | wx.ICON_INFORMATION)
+        dlg.ShowModal()
+        dlg.Destroy()
+
+    def onAbout(self, event=None):
+        dlg = wx.MessageDialog(self, self.about_msg, "About", wx.OK | wx.ICON_INFORMATION)
         dlg.ShowModal()
         dlg.Destroy()
 
