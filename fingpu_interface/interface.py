@@ -87,7 +87,7 @@ class PlotFrame(wx.Frame):
         self.Build_Panel()
         self.statusbar = self.CreateStatusBar()
         self.Plot_Data()
-        self.SetSize(size=(830, 540))
+        self.SetSize(size=(850, 540))
 
     # on span-selection of graph
     def onselect(self, xmin, xmax):
