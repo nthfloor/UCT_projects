@@ -87,7 +87,7 @@ class PlotFrame(wx.Frame):
         self.Plot_Data()
         self.SetSize(size=(830, 480))
 
-    # on span-selection of graph TODO still
+    # on span-selection of graph
     def onselect(self, xmin, xmax):
         # initialise data sets
         option_price = []
@@ -183,19 +183,19 @@ class PlotFrame(wx.Frame):
         self.stockSlider_label = wx.StaticText(self.sliderPanel, -1, "Stock Price: ")
         self.stockSlider = wx.Slider(self.sliderPanel, value=5, minValue=1, maxValue=9, 
             pos=(20, 20), size=(100,-1), style=wx.SL_HORIZONTAL|wx.SL_AUTOTICKS)
-        self.stockSlider.SetTickFreq(9, 1)
+        # self.stockSlider.SetTickFreq(9, 1)
         self.rateSlider_label = wx.StaticText(self.sliderPanel, -1, "Interest Rate: ")
         self.rateSlider = wx.Slider(self.sliderPanel, value=5, minValue=1, maxValue=9, 
             pos=(20, 20), size=(100,-1), style=wx.SL_HORIZONTAL|wx.SL_AUTOTICKS)
-        self.rateSlider.SetTickFreq(9, 1)
+        self.rateSlider.SetTickFreq(1, 1)
         self.volatilSlider_label = wx.StaticText(self.sliderPanel, -1, "Volatility: ")
         self.volatilSlider = wx.Slider(self.sliderPanel, value=5, minValue=1, maxValue=9, 
             pos=(20, 20), size=(100,-1), style=wx.SL_HORIZONTAL|wx.SL_AUTOTICKS)
-        self.volatilSlider.SetTickFreq(9, 1)
+        self.volatilSlider.SetTickFreq(1, 1)
         self.timeStepSlider_label = wx.StaticText(self.sliderPanel, -1, "Time Step: ")
         self.timeStepSlider = wx.Slider(self.sliderPanel, value=5, minValue=1, maxValue=9, 
             pos=(20, 20), size=(100,-1), style=wx.SL_HORIZONTAL|wx.SL_AUTOTICKS)
-        self.timeStepSlider.SetTickFreq(9, 1)
+        self.timeStepSlider.SetTickFreq(2, 1)
 
         self.Bind(wx.EVT_SLIDER, self.onStockSlider, self.stockSlider)
         self.Bind(wx.EVT_SLIDER, self.onRateSlider, self.rateSlider)
@@ -479,7 +479,7 @@ class PlotFrame(wx.Frame):
             #projectDir = path.rsplit('\\', 1)[0]
             
             # this also involves reading in all the data
-            self.fileReader.loadSettingsFile(path, projectDir, self.statusbar)
+            self.number_bumps = self.fileReader.loadSettingsFile(path, projectDir, self.statusbar)
             print('Opened settings file at %s' % path)
         else:
             dlg = wx.MessageDialog(self, "Failed to import the correct settings file.", "Complication", wx.OK | wx.ICON_ERROR)

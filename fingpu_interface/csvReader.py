@@ -36,6 +36,8 @@ class Reader():
         self.loadInputFile('inputs.csv')
         statusBar.SetStatusText("Importing data complete.")
 
+        return self.num_output_files
+
     def loadOutputFile(self, filename):
         ifile = open(''.join(self.data_path+filename), "rb")
         myfile = csv.reader(ifile)
