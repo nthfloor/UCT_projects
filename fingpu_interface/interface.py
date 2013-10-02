@@ -52,6 +52,7 @@ class PlotFrame(wx.Frame):
         self.viewGrid = True
         self.viewFill = False
         self.showDifference = False
+        self.showEffect = True
         self.current_view = 0
         self.time = numpy.arange(0, 31, 1)
         self.indmin = 0
@@ -64,6 +65,7 @@ class PlotFrame(wx.Frame):
         self.vega = []
         self.theta = []
         self.rho = []
+        self.risidual = []
         
         # initialise secondary data sets
         self.option_price_fill = []
@@ -216,6 +218,7 @@ class PlotFrame(wx.Frame):
         self.risidualCheck = wx.CheckBox(self.panel, label="Show Risidual", pos=(20, 20))
         self.differenceCheck = wx.CheckBox(self.panel, label="Show Difference", pos=(20, 20))
         self.effectCheck = wx.CheckBox(self.panel, label="Show Greek's effect on option price", pos=(20, 20))
+        self.effectCheck.SetValue(True)
 
         self.Bind(wx.EVT_RADIOBUTTON, self.onCallRadio, self.callRadio)
         self.Bind(wx.EVT_RADIOBUTTON, self.onPutRadio, self.putRadio)
@@ -515,30 +518,30 @@ class PlotFrame(wx.Frame):
         self.option_price = self.fileReader.getOptionPrice(self.callRadio.GetValue(), 
             self.optionPriceCheck.IsChecked())
         self.delta = self.fileReader.getDeltaValues(self.callRadio.GetValue(), 
-            self.deltaCheck.IsChecked(), self.differenceCheck.IsChecked())
+            self.deltaCheck.IsChecked(), self.differenceCheck.IsChecked(), self.effectCheck.IsChecked())
         self.gamma = self.fileReader.getGammaValues(self.callRadio.GetValue(), 
-            self.gammaCheck.IsChecked(), self.differenceCheck.IsChecked())
+            self.gammaCheck.IsChecked(), self.differenceCheck.IsChecked(), self.effectCheck.IsChecked())
         self.vega = self.fileReader.getVegaValues(self.callRadio.GetValue(), 
-            self.vegaCheck.IsChecked(), self.differenceCheck.IsChecked())
+            self.vegaCheck.IsChecked(), self.differenceCheck.IsChecked(), self.effectCheck.IsChecked())
         self.theta = self.fileReader.getThetaValues(self.callRadio.GetValue(), 
-            self.thetaCheck.IsChecked(), self.differenceCheck.IsChecked())
+            self.thetaCheck.IsChecked(), self.differenceCheck.IsChecked(), self.effectCheck.IsChecked())
         self.rho = self.fileReader.getRhoValues(self.callRadio.GetValue(), 
-            self.rhoCheck.IsChecked(), self.differenceCheck.IsChecked())
+            self.rhoCheck.IsChecked(), self.differenceCheck.IsChecked(), self.effectCheck.IsChecked())
         self.Plot_Data()
 
     def onPutRadio(self, event=None):
         self.option_price = self.fileReader.getOptionPrice(self.callRadio.GetValue(), 
             self.optionPriceCheck.IsChecked())
         self.delta = self.fileReader.getDeltaValues(self.callRadio.GetValue(), 
-            self.deltaCheck.IsChecked(), self.differenceCheck.IsChecked())
+            self.deltaCheck.IsChecked(), self.differenceCheck.IsChecked(), self.effectCheck.IsChecked())
         self.gamma = self.fileReader.getGammaValues(self.callRadio.GetValue(), 
-            self.gammaCheck.IsChecked(), self.differenceCheck.IsChecked())
+            self.gammaCheck.IsChecked(), self.differenceCheck.IsChecked(), self.effectCheck.IsChecked())
         self.vega = self.fileReader.getVegaValues(self.callRadio.GetValue(), 
-            self.vegaCheck.IsChecked(), self.differenceCheck.IsChecked())
+            self.vegaCheck.IsChecked(), self.differenceCheck.IsChecked(), self.effectCheck.IsChecked())
         self.theta = self.fileReader.getThetaValues(self.callRadio.GetValue(), 
-            self.thetaCheck.IsChecked(), self.differenceCheck.IsChecked())
+            self.thetaCheck.IsChecked(), self.differenceCheck.IsChecked(), self.effectCheck.IsChecked())
         self.rho = self.fileReader.getRhoValues(self.callRadio.GetValue(), 
-            self.rhoCheck.IsChecked(), self.differenceCheck.IsChecked())
+            self.rhoCheck.IsChecked(), self.differenceCheck.IsChecked(), self.effectCheck.IsChecked())
         self.Plot_Data() 
 
     def onOptionPrice(self, event=None):
@@ -548,34 +551,53 @@ class PlotFrame(wx.Frame):
 
     def onDelta(self, event=None):
         self.delta = self.fileReader.getDeltaValues(self.callRadio.GetValue(), 
-            self.deltaCheck.IsChecked(), self.differenceCheck.IsChecked())
+            self.deltaCheck.IsChecked(), self.differenceCheck.IsChecked(), self.effectCheck.IsChecked())
         self.Plot_Data()
 
     def onGamma(self, event=None):
         self.gamma = self.fileReader.getGammaValues(self.callRadio.GetValue(), 
-            self.gammaCheck.IsChecked(), self.differenceCheck.IsChecked())
+            self.gammaCheck.IsChecked(), self.differenceCheck.IsChecked(), self.effectCheck.IsChecked())
+
         self.Plot_Data()
 
     def onRho(self, event=None):
         self.rho = self.fileReader.getRhoValues(self.callRadio.GetValue(), 
-            self.rhoCheck.IsChecked(), self.differenceCheck.IsChecked())
+            self.rhoCheck.IsChecked(), self.differenceCheck.IsChecked(), self.effectCheck.IsChecked())
         self.Plot_Data()
 
     def onTheta(self, event=None):
         self.theta = self.fileReader.getThetaValues(self.callRadio.GetValue(), 
-            self.thetaCheck.IsChecked(), self.differenceCheck.IsChecked())
+            self.thetaCheck.IsChecked(), self.differenceCheck.IsChecked(), self.effectCheck.IsChecked())
         self.Plot_Data()
 
     def onVega(self, event=None):
         self.vega = self.fileReader.getVegaValues(self.callRadio.GetValue(), 
-            self.vegaCheck.IsChecked(), self.differenceCheck.IsChecked())
+            self.vegaCheck.IsChecked(), self.differenceCheck.IsChecked(), self.effectCheck.IsChecked())
         self.Plot_Data()
 
     def onRisidual(self, event=None):
         pass
 
     def onShowEffects(self, event=None):
-        pass # TODO
+        # TODO - show warning
+        if self.showEffect:
+            self.showEffect = False
+        else:
+            self.showEffect = True
+
+        # reload and replot data
+        self.delta = self.fileReader.getDeltaValues(self.callRadio.GetValue(), 
+            self.deltaCheck.IsChecked(), self.differenceCheck.IsChecked(), self.effectCheck.IsChecked())
+        self.gamma = self.fileReader.getGammaValues(self.callRadio.GetValue(), 
+            self.gammaCheck.IsChecked(), self.differenceCheck.IsChecked(), self.effectCheck.IsChecked())
+        self.vega = self.fileReader.getVegaValues(self.callRadio.GetValue(), 
+            self.vegaCheck.IsChecked(), self.differenceCheck.IsChecked(), self.effectCheck.IsChecked())
+        self.theta = self.fileReader.getThetaValues(self.callRadio.GetValue(), 
+            self.thetaCheck.IsChecked(), self.differenceCheck.IsChecked(), self.effectCheck.IsChecked())
+        self.rho = self.fileReader.getRhoValues(self.callRadio.GetValue(), 
+            self.rhoCheck.IsChecked(), self.differenceCheck.IsChecked(), self.effectCheck.IsChecked())
+
+        self.Plot_Data()
 
     def onDifferenceCheck(self, event=None):
         if self.showDifference:
@@ -585,15 +607,15 @@ class PlotFrame(wx.Frame):
             
         # reload and replot data
         self.delta = self.fileReader.getDeltaValues(self.callRadio.GetValue(), 
-            self.deltaCheck.IsChecked(), self.differenceCheck.IsChecked())
+            self.deltaCheck.IsChecked(), self.differenceCheck.IsChecked(), self.effectCheck.IsChecked())
         self.gamma = self.fileReader.getGammaValues(self.callRadio.GetValue(), 
-            self.gammaCheck.IsChecked(), self.differenceCheck.IsChecked())
+            self.gammaCheck.IsChecked(), self.differenceCheck.IsChecked(), self.effectCheck.IsChecked())
         self.vega = self.fileReader.getVegaValues(self.callRadio.GetValue(), 
-            self.vegaCheck.IsChecked(), self.differenceCheck.IsChecked())
+            self.vegaCheck.IsChecked(), self.differenceCheck.IsChecked(), self.effectCheck.IsChecked())
         self.theta = self.fileReader.getThetaValues(self.callRadio.GetValue(), 
-            self.thetaCheck.IsChecked(), self.differenceCheck.IsChecked())
+            self.thetaCheck.IsChecked(), self.differenceCheck.IsChecked(), self.effectCheck.IsChecked())
         self.rho = self.fileReader.getRhoValues(self.callRadio.GetValue(), 
-            self.rhoCheck.IsChecked(), self.differenceCheck.IsChecked())
+            self.rhoCheck.IsChecked(), self.differenceCheck.IsChecked(), self.effectCheck.IsChecked())
         self.Plot_Data()
 
     def onStockSlider(self, event=None):
@@ -641,47 +663,46 @@ class PlotFrame(wx.Frame):
             self.axes.grid(self.viewGrid)
 
             # plot graphs here
-            t = numpy.arange(0, 31, 1)
             p = []
             if self.viewFill and len(self.option_price) > 0:
                 p = numpy.array(map(float, self.option_price[self.stock_bump]))
             if len(self.option_price) > 0:
-                self.axes.plot(t, self.option_price[self.stock_bump], label="Option Price")
+                self.axes.plot(self.time, self.option_price[self.stock_bump], label="Option Price")
             if len(self.delta) > 0:
                 if self.viewFill and len(self.option_price) > 0:
                     s = numpy.array(self.delta[self.stock_bump])
-                    self.axes.fill_between(t, p, s, where=s>=p, facecolor='red', interpolate=True)
-                    self.axes.fill_between(t, p, s, where=s<=p, facecolor='green', interpolate=True)
+                    self.axes.fill_between(self.time, p, s, where=s>=p, facecolor='red', interpolate=True)
+                    self.axes.fill_between(self.time, p, s, where=s<=p, facecolor='green', interpolate=True)
                 else:
                     self.axes.plot(self.delta[self.stock_bump], label="Delta")
-            if len(self.gamma) > 0 and len(self.option_price) > 0:
-                if self.viewFill:
+            if len(self.gamma) > 0:
+                if self.viewFill and len(self.option_price) > 0:
                     s = numpy.array(self.gamma[self.stock_bump])
-                    self.axes.fill_between(t, p, s, where=s>=p, facecolor='red', interpolate=True)
-                    self.axes.fill_between(t, p, s, where=s<=p, facecolor='cyan', interpolate=True)
+                    self.axes.fill_between(self.time, p, s, where=s>=p, facecolor='red', interpolate=True)
+                    self.axes.fill_between(self.time, p, s, where=s<=p, facecolor='cyan', interpolate=True)
                 else:
                     self.axes.plot(self.gamma[self.stock_bump], label="Gamma")
-            if len(self.vega) > 0 and len(self.option_price) > 0:
+            if len(self.vega) > 0:
                 if self.viewFill and len(self.option_price) > 0:
                     s = numpy.array(self.vega[self.volitile_bump])
-                    self.axes.fill_between(t, p, s, where=s>=p, facecolor='red', interpolate=True)
-                    self.axes.fill_between(t, p, s, where=s<=p, facecolor='yellow', interpolate=True)
+                    self.axes.fill_between(self.time, p, s, where=s>=p, facecolor='red', interpolate=True)
+                    self.axes.fill_between(self.time, p, s, where=s<=p, facecolor='yellow', interpolate=True)
                 else:
                     self.axes.plot(self.vega[self.volitile_bump], label="Vega")
             if len(self.theta) > 0:
                 if self.viewFill and len(self.option_price) > 0:
                     s = numpy.array(self.theta[self.time_bump])
-                    self.axes.fill_between(t, p, s, where=s>=p, facecolor='red', interpolate=True)
-                    self.axes.fill_between(t, p, s, where=s<=p, facecolor='blue', interpolate=True)
+                    self.axes.fill_between(self.time, p, s, where=s>=p, facecolor='red', interpolate=True)
+                    self.axes.fill_between(self.time, p, s, where=s<=p, facecolor='blue', interpolate=True)
                 else:
-                    self.axes.plot(t, self.theta[self.time_bump], label="Theta")
+                    self.axes.plot(self.time, self.theta[self.time_bump], label="Theta")
             if len(self.rho) > 0:
                 if self.viewFill and len(self.option_price) > 0:
                     s = numpy.array(self.rho[self.rate_bump])
-                    self.axes.fill_between(t, p, s, where=s>=p, facecolor='red', interpolate=True)
-                    self.axes.fill_between(t, p, s, where=s<=p, facecolor='white', interpolate=True)
+                    self.axes.fill_between(self.time, p, s, where=s>=p, facecolor='red', interpolate=True)
+                    self.axes.fill_between(self.time, p, s, where=s<=p, facecolor='white', interpolate=True)
                 else:
-                    self.axes.plot(t, self.rho[self.rate_bump], label="Rho")
+                    self.axes.plot(self.time, self.rho[self.rate_bump], label="Rho")
             if self.viewLegend:
                 # Shink current axis by 15%
                 box = self.axes.get_position()
@@ -743,14 +764,13 @@ class PlotFrame(wx.Frame):
         self.axes2 = self.fig.add_subplot(212)
         self.axes2.grid(self.viewGrid)
 
-        if self.viewFill:
-            p = self.option_price_fill
-
         self.time_span_fill = self.time[self.indmin:self.indmax]
         if len(self.option_price) > 0:
             self.option_price_fill = numpy.array(map(float, self.option_price[self.stock_bump][self.indmin:self.indmax]))
         else:
             self.option_price_fill = []
+        if self.viewFill:
+            p = self.option_price_fill
         if len(self.delta) > 0:
             self.delta_fill = numpy.array(map(float, self.delta[self.stock_bump][self.indmin:self.indmax]))
         else:
