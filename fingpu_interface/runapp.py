@@ -5,7 +5,7 @@ import interface
 
 
 start_msg= """ 
-    Use Menus to import a data and test printing.
+    Use Menus to import data, toggle options and test printing.
     Data must be in one folder containing a project settings file.
     Ctrl-C to copy plot image to clipboard.
 """
