@@ -608,8 +608,18 @@ class PlotFrame(wx.Frame):
         self.Plot_Data()
 
     def onShowEffects(self, event=None):
-        # TODO - show warning
         if self.showEffect:
+            warning_msg = """
+                This setting will plot the value of the greeks, but not terms of the option price. This means that the greek graphs will no-longer be comparable. You will still be able to plot the greeks against each other though.
+
+                Do you want to continue?
+            """
+            dlg = wx.MessageDialog(self, warning_msg, "Take Note", wx.YES_NO | wx.ICON_ERROR)
+            ret = dlg.ShowModal()
+            if ret == wx.ID_NO:
+                dlg.Destroy()
+                return
+            dlg.Destroy()
             self.showEffect = False
         else:
             self.showEffect = True
@@ -736,7 +746,18 @@ class PlotFrame(wx.Frame):
 
             # set caption and axes labels
             self.axes.set_xlabel('Time (Daily)')
-            self.axes.set_ylabel('Price (Rands)')
+            if self.showEffect:
+                self.axes.set_ylabel('Price (Rands)')
+                if hasattr(self, 'title'):
+                    self.title.set_text('Option Prices and breakdown of the effects of Greeks')
+                else:
+                    self.title = self.fig.suptitle('Option Prices and breakdown of the effects of Greeks')
+            else:
+                self.axes.set_ylabel('Greek Value')
+                if hasattr(self, 'title'):
+                    self.title.set_text('Greek values not in terms of option price')
+                else:
+                    self.title = self.fig.suptitle('Greek values not in terms of option price')
 
             if self.viewLegend:
                 # Shink current axis by 15%
