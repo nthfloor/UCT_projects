@@ -1,7 +1,16 @@
 #!/bin/bash
 
+if [ $# -eq 0 ]
+then
+    exit "No arguments supplied"
+fi
+
 if [ $1 == "-m" ]
 then
+    if [ -z $2 ]
+    then
+        exit "Need to supply branch name"
+    fi
     echo "merging with master"
     git commit -a
     git checkout master
