@@ -132,13 +132,10 @@ class Reader():
                                 s1 = float(self.stock_price_data[stock_index])
                                 s2 = float(self.stock_price_data[stock_index+1])
                                 greek_value = greek_value*(s2-s1) # calculate delta effect relative to option price
-                                
-                                if viewDifference:
-                                    tempDelta.append(greek_value)
-                                else:
-                                    tempDelta.append(greek_value+float(call_option[1]))
-                            else:
+                            if viewDifference:
                                 tempDelta.append(greek_value)
+                            else:
+                                tempDelta.append(greek_value+float(call_option[1]))
                         else:
                             tempDelta.append(greek_value)
                     temp.append(tempDelta)
@@ -154,12 +151,10 @@ class Reader():
                                 s1 = float(self.stock_price_data[stock_index])
                                 s2 = float(self.stock_price_data[stock_index+1])
                                 greek_value = greek_value*(s2-s1) # calculate delta effect relative to option price
-                                if viewDifference:
-                                    tempDelta.append(greek_value)
-                                else:                            
-                                    tempDelta.append(greek_value+float(put_option[1]))
-                            else:
+                            if viewDifference:
                                 tempDelta.append(greek_value)
+                            else:
+                                tempDelta.append(greek_value+float(put_option[1]))
                         else:
                             tempDelta.append(greek_value)
                     temp.append(tempDelta)
@@ -180,13 +175,11 @@ class Reader():
                             if stock_index < 30:
                                 s1 = float(self.stock_price_data[stock_index])
                                 s2 = float(self.stock_price_data[stock_index+1])
-                                gamma = gamma*(s2-s1) # calculate gamma effect relative to option price
-                                if viewDifference:
-                                    tempGamma.append(gamma)
-                                else:
-                                    tempGamma.append(gamma+float(call_option[1]))
-                            else:
+                                gamma = gamma*(s2-s1) # calculate gamma effect relative to option price                                
+                            if viewDifference:
                                 tempGamma.append(gamma)
+                            else:
+                                tempGamma.append(gamma+float(call_option[1]))
                         else:
                             tempGamma.append(gamma)
                     temp.append(tempGamma)
@@ -202,12 +195,10 @@ class Reader():
                                 s1 = float(self.stock_price_data[stock_index])
                                 s2 = float(self.stock_price_data[stock_index+1])
                                 greek_value = greek_value*(s2-s1) # calculate gamma effect relative to option price
-                                if viewDifference:
-                                    tempGamma.append(greek_value)
-                                else:
-                                    tempGamma.append(greek_value+float(put_option[1]))
-                            else:
+                            if viewDifference:
                                 tempGamma.append(greek_value)
+                            else:
+                                tempGamma.append(greek_value+float(put_option[1]))
                         else:
                             tempGamma.append(greek_value)
                     temp.append(tempGamma)
@@ -227,12 +218,10 @@ class Reader():
                         if showGreekEffect:
                             if stock_index < 30:
                                 greek_value = greek_value*0  # In this option price model the volatility does not change, so the effect is zero
-                                if viewDifference:
-                                    tempVega.append(greek_value)
-                                else:
-                                    tempVega.append(greek_value+float(call_option[1]))
+                            if viewDifference:
+                                tempVega.append(greek_value)
                             else:
-                                tempVega.append(0)
+                                tempVega.append(greek_value+float(call_option[1]))
                         else:
                             tempVega.append(greek_value*0)
                     temp.append(tempVega)
@@ -246,12 +235,10 @@ class Reader():
                         if showGreekEffect:
                             if stock_index < 30:
                                 greek_value = greek_value*0  # In this option price model the volatility does not change, so the effect is zero
-                                if viewDifference:
-                                    tempVega.append(greek_value)
-                                else:
-                                    tempVega.append(greek_value+float(put_option[1]))
+                            if viewDifference:
+                                tempVega.append(greek_value)
                             else:
-                                tempVega.append(0)
+                                tempVega.append(greek_value+float(put_option[1]))
                         else:
                             tempVega.append(0)
                     temp.append(tempVega)
@@ -304,12 +291,10 @@ class Reader():
                                 s1 = float(self.interest_rate_data[r_index])
                                 s2 = float(self.interest_rate_data[r_index+1])
                                 greek_value = greek_value*(s2-s1) # calculate rho effect relative to option price
-                                if viewDifference:
-                                    tempRho.append(greek_value)
-                                else:
-                                    tempRho.append(greek_value+float(call_option[1]))
-                            else:
+                            if viewDifference:
                                 tempRho.append(greek_value)
+                            else:
+                                tempRho.append(greek_value+float(call_option[1]))
                         else:
                             tempRho.append(greek_value)
                     temp.append(tempRho)
@@ -324,12 +309,10 @@ class Reader():
                                 s1 = float(self.interest_rate_data[r_index])
                                 s2 = float(self.interest_rate_data[r_index+1])
                                 greek_value = greek_value*(s2-s1) # calculate rho effect relative to option price
-                                if viewDifference:
-                                    tempRho.append(greek_value)
-                                else:
-                                    tempRho.append(greek_value+float(put_option[1]))
-                            else:
+                            if viewDifference:
                                 tempRho.append(greek_value)
+                            else:
+                                tempRho.append(greek_value+float(put_option[1]))
                         else:
                             tempRho.append(greek_value)
                     temp.append(tempRho)
@@ -359,12 +342,10 @@ class Reader():
                             s1 = float(call_option[1])
                             s2 = float(call_option_file[index+1][1])
                             greek_value = s2-(greek_value+s1) # calculate rho effect relative to option price
-                            if viewDifference or showGreekEffect:
-                                tempRisidual.append(greek_value)
-                            else:
-                                tempRisidual.append(greek_value+float(call_option[1]))
-                        else:
+                        if viewDifference or showGreekEffect:
                             tempRisidual.append(greek_value)
+                        else:
+                            tempRisidual.append(greek_value+float(call_option[1]))
                     temp.append(tempRisidual)
                     tempRisidual = []
             else:
@@ -385,12 +366,10 @@ class Reader():
                             s1 = float(put_option[1])
                             s2 = float(put_option_file[index+1][1])
                             greek_value = s2-(greek_value+s1) # calculate rho effect relative to option price
-                            if viewDifference or showGreekEffect:
-                                tempRisidual.append(greek_value)
-                            else:
-                                tempRisidual.append(greek_value+float(put_option[1]))
+                        if viewDifference or showGreekEffect:
+                            tempRisidual.append(greek_value)
                         else:
-                            tempRisidual.append(0)
+                            tempRisidual.append(greek_value+float(put_option[1]))
                     temp.append(tempRisidual)
                     tempRisidual = []
         return temp

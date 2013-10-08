@@ -224,12 +224,13 @@ class PlotFrame(wx.Frame):
         self.putRadio = wx.RadioButton(self.panel, label="Put options", pos=(10, 30))
         self.callRadio.SetValue(True)        
         self.spaceKeeper = wx.StaticText(self.panel, -1, '')
-        self.optionPriceCheck = wx.CheckBox(self.panel, label="Option Price", pos=(20, 20))
-        self.deltaCheck = wx.CheckBox(self.panel, label="Delta", pos=(20, 20))
-        self.gammaCheck = wx.CheckBox(self.panel, label="Gamma", pos=(20, 20))
-        self.rhoCheck = wx.CheckBox(self.panel, label="Rho", pos=(20, 20))
-        self.thetaCheck = wx.CheckBox(self.panel, label="Theta", pos=(20, 20))
-        self.vegaCheck = wx.CheckBox(self.panel, label="Vega", pos=(20, 20))
+        self.optionPriceCheck = wx.CheckBox(self.panel, label="view Option Price", pos=(20, 20))
+        self.deltaCheck = wx.CheckBox(self.panel, label="show Delta", pos=(20, 20))
+        self.gammaCheck = wx.CheckBox(self.panel, label="show Gamma", pos=(20, 20))
+        self.rhoCheck = wx.CheckBox(self.panel, label="show Rho", pos=(20, 20))
+        self.thetaCheck = wx.CheckBox(self.panel, label="show Theta", pos=(20, 20))
+        self.vegaCheck = wx.CheckBox(self.panel, label="show Vega", pos=(20, 20))
+        self.fillCheck = wx.CheckBox(self.panel, label="show fill feature", pos=(20, 20))
         self.risidualCheck = wx.CheckBox(self.panel, label="Show Risidual", pos=(20, 20))
         self.differenceCheck = wx.CheckBox(self.panel, label="Show Difference", pos=(20, 20))
         self.effectCheck = wx.CheckBox(self.panel, label="Show Greek's effect on option price", pos=(20, 20))
@@ -246,8 +247,9 @@ class PlotFrame(wx.Frame):
         self.Bind(wx.EVT_CHECKBOX, self.onRisidual, self.risidualCheck)
         self.Bind(wx.EVT_CHECKBOX, self.onDifferenceCheck, self.differenceCheck)
         self.Bind(wx.EVT_CHECKBOX, self.onShowEffects, self.effectCheck)
+        self.Bind(wx.EVT_CHECKBOX, self.onShowFillEffect, self.fillCheck)
 
-        # Create the navigation toolbar, tied to the canvas
+        # Create the navigation toolbar, tied to the canvas TODO
         self.toolbar = NavigationToolbar(self.canvas)
 
         ####################
@@ -275,25 +277,26 @@ class PlotFrame(wx.Frame):
 
         # add border for type of option price
         self.optionsBorder = wx.StaticBoxSizer(wx.StaticBox(self.panel, -1, 'Option Price Type'), orient=wx.VERTICAL)
-        self.flexiOptions = wx.FlexGridSizer(2, 1, 3, 10)
+        self.flexiOptions = wx.FlexGridSizer(3, 1, 3, 10)
         self.flexiOptions.AddMany([(self.callRadio, 1, wx.EXPAND), 
-            (self.putRadio, 1, wx.EXPAND)])            
+            (self.putRadio, 1, wx.EXPAND), (self.optionPriceCheck, 1, wx.EXPAND)])            
         self.optionsBorder.Add(self.flexiOptions, 1, wx.ALL, 5)
-        self.vboxOptions.Add(self.optionsBorder, 1, flag=wx.ALIGN_LEFT|wx.ALL|wx.GROW)
+        self.vboxOptions.Add(self.optionsBorder, 0, flag=wx.ALIGN_LEFT|wx.ALL|wx.GROW)
         
         # add border for greeks
         self.greekOptionsBorder = wx.StaticBoxSizer(wx.StaticBox(self.panel, -1, 'Greek Options'), orient=wx.VERTICAL)
-        self.flexiOptions2 = wx.FlexGridSizer(7, 1, 3, 10)
-        self.flexiOptions2.AddMany([(self.optionPriceCheck, 1, wx.EXPAND), (self.deltaCheck, 1, wx.EXPAND), (self.gammaCheck, 1, wx.EXPAND), 
+        self.flexiOptions2 = wx.FlexGridSizer(6, 1, 3, 10)
+        self.flexiOptions2.AddMany([(self.deltaCheck, 1, wx.EXPAND), (self.gammaCheck, 1, wx.EXPAND), 
             (self.rhoCheck, 1, wx.EXPAND), (self.thetaCheck, 1, wx.EXPAND), (self.vegaCheck, 1, wx.EXPAND)])
         self.greekOptionsBorder.Add(self.flexiOptions2, 1, wx.ALL, 5)
-        self.vboxOptions.Add(self.greekOptionsBorder, 2, flag=wx.ALIGN_LEFT|wx.ALL|wx.GROW)
+        self.vboxOptions.Add(self.greekOptionsBorder, 1, flag=wx.ALIGN_LEFT|wx.ALL|wx.GROW)
         #self.vboxOptions.AddSpacer(5)
         
         # add border for other checkable options
         self.otherOptionsBorder = wx.StaticBoxSizer(wx.StaticBox(self.panel, -1, 'Extra Options'), orient=wx.VERTICAL)
-        self.flexiOptions3 = wx.FlexGridSizer(3, 1, 3, 10)
-        self.flexiOptions3.AddMany([(self.risidualCheck, 1, wx.EXPAND), (self.differenceCheck, 1, wx.EXPAND), (self.effectCheck, 1, wx.EXPAND)])
+        self.flexiOptions3 = wx.FlexGridSizer(4, 1, 3, 10)
+        self.flexiOptions3.AddMany([(self.fillCheck, 1, wx.EXPAND), (self.risidualCheck, 1, wx.EXPAND), (self.differenceCheck, 1, wx.EXPAND), 
+            (self.effectCheck, 1, wx.EXPAND)])
         self.otherOptionsBorder.Add(self.flexiOptions3, 1, wx.ALL, 5)
         self.vboxOptions.Add(self.otherOptionsBorder, 0, flag=wx.ALIGN_LEFT|wx.ALL|wx.GROW)
         self.vboxOptions.AddSpacer(5)
@@ -327,7 +330,6 @@ class PlotFrame(wx.Frame):
         MENU_ADVANCE = wx.NewId()
         MENU_LEGEND = wx.NewId()
         MENU_3D = wx.NewId()
-        MENU_FILL = wx.NewId()
         MENU_ABOUT = wx.NewId()
 
         menuBar = wx.MenuBar()
@@ -352,21 +354,20 @@ class PlotFrame(wx.Frame):
         f1.Append(MENU_BASIC, '&Basic', "Basic View(2D)")
         f1.Append(MENU_ADVANCE, '&Advanced-2D', "Advanced View(2D)")
         f1.Append(MENU_3D, 'A&dvanced-3D', "Advanced View(3D)")
+
+        optionsMenu = wx.Menu()
+        viewGridItem = wx.MenuItem(optionsMenu, MENU_VIEW_GRID, 'View &Grid\tCtrl+G')
+        optionsMenu.AppendItem(viewGridItem)
+        viewLegendItem = wx.MenuItem(optionsMenu, MENU_LEGEND, 'View &Legend\tCtrl+L')
+        optionsMenu.AppendItem(viewLegendItem)
+        f1.AppendMenu(-1, "&Options", optionsMenu)
+
         menuBar.Append(f1, "&View")
 
         f2 = wx.Menu()
-        viewGridItem = wx.MenuItem(f2, MENU_VIEW_GRID, 'View &Grid\tCtrl+G')
-        f2.AppendItem(viewGridItem)
-        viewLegendItem = wx.MenuItem(f2, MENU_LEGEND, 'View &Legend\tCtrl+L')
-        f2.AppendItem(viewLegendItem)
-        viewFillItem = wx.MenuItem(f2, MENU_FILL, 'View &Fill\tCtrl+F')
-        f2.AppendItem(viewFillItem)
-        menuBar.Append(f2, "&Tools")
-
-        f3 = wx.Menu()
-        f3.Append(MENU_HELP, "&Quick Reference",  "Quick Reference")
-        f3.Append(MENU_ABOUT, "&About",  "About this interface")
-        menuBar.Append(f3, "&Help")
+        f2.Append(MENU_HELP, "&Quick Reference",  "Quick Reference")
+        f2.Append(MENU_ABOUT, "&About",  "About this interface")
+        menuBar.Append(f2, "&Help")
 
         self.SetMenuBar(menuBar)
 
@@ -384,16 +385,8 @@ class PlotFrame(wx.Frame):
         self.Bind(wx.EVT_MENU, self.onBasicView,    id=MENU_BASIC)
         self.Bind(wx.EVT_MENU, self.onAdvancedView, id=MENU_ADVANCE)
         self.Bind(wx.EVT_MENU, self.onAdvanced3DView, id=MENU_3D)
-        self.Bind(wx.EVT_MENU, self.onViewFill, id=MENU_FILL)
 
     """ Menu event methods """
-    def onViewFill(self, event=None):
-        if self.viewFill:
-            self.viewFill = False
-        else:
-            self.viewFill = True
-        self.Plot_Data()
-
     def onViewLegend(self, event=None):
         if self.viewLegend:
             self.viewLegend = False
@@ -539,6 +532,13 @@ class PlotFrame(wx.Frame):
             self.Destroy()
 
     """ GUI event methods """
+    def onShowFillEffect(self, event=None):
+        if self.fillCheck.IsChecked():
+            self.viewFill = True
+        else:
+            self.viewFill = False
+        self.Plot_Data()
+
     def onCallRadio(self, event=None):
         self.option_price = self.fileReader.getOptionPrice(self.callRadio.GetValue(), 
             self.optionPriceCheck.IsChecked())
@@ -608,7 +608,9 @@ class PlotFrame(wx.Frame):
         self.Plot_Data()
 
     def onShowEffects(self, event=None):
-        if self.showEffect:
+        if self.effectCheck.IsChecked():
+            self.showEffect = False
+        else:
             warning_msg = """
                 This setting will plot the value of the greeks, but not terms of the option price. This means that the greek graphs will no-longer be comparable. You will still be able to plot the greeks against each other though.
 
@@ -620,8 +622,6 @@ class PlotFrame(wx.Frame):
                 dlg.Destroy()
                 return
             dlg.Destroy()
-            self.showEffect = False
-        else:
             self.showEffect = True
 
         # reload and replot data
@@ -639,10 +639,10 @@ class PlotFrame(wx.Frame):
         self.Plot_Data()
 
     def onDifferenceCheck(self, event=None):
-        if self.showDifference:
-            self.showDifference = False
-        else:
+        if self.differenceCheck.IsChecked():
             self.showDifference = True
+        else:
+            self.showDifference = False
             
         # reload and replot data
         self.delta = self.fileReader.getDeltaValues(self.callRadio.GetValue(), 
