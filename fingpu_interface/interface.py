@@ -58,8 +58,6 @@ class PlotFrame(wx.Frame):
         self.viewLegend = False
         self.viewGrid = True
         self.viewFill = False
-        self.showDifference = False
-        self.showEffect = True
         self.current_view = 0
         self.time = numpy.arange(0, 31, 1)
         self.indmin = 0
@@ -555,6 +553,8 @@ class PlotFrame(wx.Frame):
             self.thetaCheck.IsChecked(), self.differenceCheck.IsChecked(), self.effectCheck.IsChecked())
         self.rho = self.fileReader.getRhoValues(self.callRadio.GetValue(), 
             self.rhoCheck.IsChecked(), self.differenceCheck.IsChecked(), self.effectCheck.IsChecked())
+        self.risidual = self.fileReader.getRisidualValues(self.callRadio.GetValue(), self.risidualCheck.IsChecked(),
+            self.differenceCheck.IsChecked(), self.effectCheck.IsChecked())
         self.Plot_Data()
 
     def onPutRadio(self, event=None):
@@ -570,6 +570,8 @@ class PlotFrame(wx.Frame):
             self.thetaCheck.IsChecked(), self.differenceCheck.IsChecked(), self.effectCheck.IsChecked())
         self.rho = self.fileReader.getRhoValues(self.callRadio.GetValue(), 
             self.rhoCheck.IsChecked(), self.differenceCheck.IsChecked(), self.effectCheck.IsChecked())
+        self.risidual = self.fileReader.getRisidualValues(self.callRadio.GetValue(), self.risidualCheck.IsChecked(),
+            self.differenceCheck.IsChecked(), self.effectCheck.IsChecked())
         self.Plot_Data() 
 
     def onOptionPrice(self, event=None):
@@ -611,21 +613,19 @@ class PlotFrame(wx.Frame):
         self.Plot_Data()
 
     def onShowEffects(self, event=None):
-        if self.effectCheck.IsChecked():
-            self.showEffect = False
-        else:
+        if not self.effectCheck.IsChecked():
             warning_msg = """
                 This setting will plot the value of the greeks, but not terms of the option price. This means that the greek graphs will no-longer be comparable. You will still be able to plot the greeks against each other though.
 
                 Do you want to continue?
             """
-            dlg = wx.MessageDialog(self, warning_msg, "Take Note", wx.YES_NO | wx.ICON_ERROR)
+            dlg = wx.MessageDialog(self, warning_msg, "Take Note", wx.YES_NO | wx.ICON_INFORMATION)
             ret = dlg.ShowModal()
             if ret == wx.ID_NO:
                 dlg.Destroy()
+                self.effectCheck.SetValue(True)
                 return
             dlg.Destroy()
-            self.showEffect = True
 
         # reload and replot data
         self.delta = self.fileReader.getDeltaValues(self.callRadio.GetValue(), 
@@ -638,15 +638,12 @@ class PlotFrame(wx.Frame):
             self.thetaCheck.IsChecked(), self.differenceCheck.IsChecked(), self.effectCheck.IsChecked())
         self.rho = self.fileReader.getRhoValues(self.callRadio.GetValue(), 
             self.rhoCheck.IsChecked(), self.differenceCheck.IsChecked(), self.effectCheck.IsChecked())
+        self.risidual = self.fileReader.getRisidualValues(self.callRadio.GetValue(), self.risidualCheck.IsChecked(),
+            self.differenceCheck.IsChecked(), self.effectCheck.IsChecked())
 
         self.Plot_Data()
 
     def onDifferenceCheck(self, event=None):
-        if self.differenceCheck.IsChecked():
-            self.showDifference = True
-        else:
-            self.showDifference = False
-            
         # reload and replot data
         self.delta = self.fileReader.getDeltaValues(self.callRadio.GetValue(), 
             self.deltaCheck.IsChecked(), self.differenceCheck.IsChecked(), self.effectCheck.IsChecked())
@@ -658,6 +655,8 @@ class PlotFrame(wx.Frame):
             self.thetaCheck.IsChecked(), self.differenceCheck.IsChecked(), self.effectCheck.IsChecked())
         self.rho = self.fileReader.getRhoValues(self.callRadio.GetValue(), 
             self.rhoCheck.IsChecked(), self.differenceCheck.IsChecked(), self.effectCheck.IsChecked())
+        self.risidual = self.fileReader.getRisidualValues(self.callRadio.GetValue(), self.risidualCheck.IsChecked(),
+            self.differenceCheck.IsChecked(), self.effectCheck.IsChecked())
         self.Plot_Data()
 
     def onStockSlider(self, event=None):
@@ -749,7 +748,7 @@ class PlotFrame(wx.Frame):
 
             # set caption and axes labels
             self.axes.set_xlabel('Time (Daily)')
-            if self.showEffect:
+            if self.effectCheck.IsChecked():
                 self.axes.set_ylabel('Price (Rands)')
                 if hasattr(self, 'title'):
                     self.title.set_text('Option Prices and breakdown of the effects of Greeks')
@@ -927,6 +926,7 @@ class PlotFrame(wx.Frame):
 
         b = numpy.arange(0, 9, 1)
         X2D, Y2D = numpy.meshgrid(self.time, b)
+        Z2D = None
         
         # plot option price surface
         if len(self.option_price) > 0:
@@ -967,15 +967,21 @@ class PlotFrame(wx.Frame):
             self.axes.plot_surface(X2D, Y2D, Z2D, rstride=1, cstride=1,
                 antialiased=False, alpha=0.75, color='black')
         
-        #~ cset = self.axes.contour(X2D, Y2D, Z2D, zdir='z', offset=0, cmap=cm.coolwarm)
-        #cset = self.axes.contour(X2D, Y2D, Z2D, zdir='x', offset=0, cmap=cm.coolwarm)
-        #cset = self.axes.contour(X2D, Y2D, Z2D, zdir='y', offset=8, cmap=cm.coolwarm)
+        if Z2D != None:
+            cset1 = self.axes.contourf(X2D, Y2D, Z2D, zdir='z', offset=300, cmap=cm.afmhot)
+            cset2 = self.axes.contourf(X2D, Y2D, Z2D, zdir='x', offset=0, cmap=cm.coolwarm)
+            cset3 = self.axes.contour(X2D, Y2D, Z2D, zdir='y', offset=-0.3, cmap=cm.afmhot)
+            # cset = self.axes.contour(X2D, Y2D, Z2D, zdir='y', offset=10, cmap=cm.afmhot)
+            # cbar = self.fig.colorbar(cset1, shrink=0.7, aspect=3)
+            # cbar = self.fig.colorbar(cset2, shrink=0.7, aspect=3)
+            # cbar = self.fig.colorbar(cset3, shrink=0.5, aspect=5)
+            # cbar.set_label('Option Proce', rotation=90)
 
         self.axes.set_xlabel('Time (Days)')
         self.axes.set_xlim(0, 35)
         self.axes.set_ylabel('Bump Size')
         #~ self.axes.set_ylim(-3, 8)
         self.axes.set_zlabel('Price (Rands)')
-        #~ self.axes.set_zlim(-100, 100)
+        # ~ self.axes.set_zlim(-100, 100)
 
         self.canvas.draw()
