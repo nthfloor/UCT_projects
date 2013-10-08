@@ -405,6 +405,7 @@ class PlotFrame(wx.Frame):
         
         # show sliders panel
         self.sliderPanel.Show()
+        self.toolbar.Show()
         self.panel.Layout()
         
         self.Plot_Data()
@@ -414,6 +415,7 @@ class PlotFrame(wx.Frame):
         
         # show sliders panel
         self.sliderPanel.Show()
+        self.toolbar.Hide()
         self.panel.Layout()
         
         self.Plot_Data()
@@ -423,6 +425,7 @@ class PlotFrame(wx.Frame):
         
         # hide slider panel since will not be used
         self.sliderPanel.Hide()
+        self.toolbar.Hide()
         self.panel.Layout()
         
         self.Plot_Data()
@@ -706,43 +709,43 @@ class PlotFrame(wx.Frame):
             if self.viewFill and len(self.option_price) > 0:
                 p = numpy.array(map(float, self.option_price[self.stock_bump]))
             if len(self.option_price) > 0:
-                self.axes.plot(self.time, self.option_price[self.stock_bump], label="Option Price")
+                self.axes.plot(self.time, self.option_price[self.stock_bump], label="Option Price", color='blue')
             if len(self.delta) > 0:
                 if self.viewFill and len(self.option_price) > 0:
                     s = numpy.array(self.delta[self.stock_bump])
                     self.axes.fill_between(self.time, p, s, where=s>=p, facecolor='green', interpolate=True)
                     self.axes.fill_between(self.time, p, s, where=s<=p, facecolor='red', interpolate=True)
-                self.axes.plot(self.delta[self.stock_bump], label="Delta")
+                self.axes.plot(self.delta[self.stock_bump], label="Delta", color='green')
             if len(self.gamma) > 0:
                 if self.viewFill and len(self.option_price) > 0:
                     s = numpy.array(self.gamma[self.stock_bump])
                     self.axes.fill_between(self.time, p, s, where=s>=p, facecolor='cyan', interpolate=True)
                     self.axes.fill_between(self.time, p, s, where=s<=p, facecolor='red', interpolate=True)
-                self.axes.plot(self.gamma[self.stock_bump], label="Gamma")
+                self.axes.plot(self.gamma[self.stock_bump], label="Gamma", color='cyan')
             if len(self.vega) > 0:
                 if self.viewFill and len(self.option_price) > 0:
                     s = numpy.array(self.vega[self.volitile_bump])
-                    self.axes.fill_between(self.time, p, s, where=s>=p, facecolor='yellow', interpolate=True)
+                    self.axes.fill_between(self.time, p, s, where=s>=p, facecolor='magenta', interpolate=True)
                     self.axes.fill_between(self.time, p, s, where=s<=p, facecolor='red', interpolate=True)
-                self.axes.plot(self.vega[self.volitile_bump], label="Vega")
+                self.axes.plot(self.vega[self.volitile_bump], label="Vega", color='magenta')
             if len(self.theta) > 0:
                 if self.viewFill and len(self.option_price) > 0:
                     s = numpy.array(self.theta[self.time_bump])
-                    self.axes.fill_between(self.time, p, s, where=s>=p, facecolor='blue', interpolate=True)
+                    self.axes.fill_between(self.time, p, s, where=s>=p, facecolor='yellow', interpolate=True)
                     self.axes.fill_between(self.time, p, s, where=s<=p, facecolor='red', interpolate=True)
-                self.axes.plot(self.time, self.theta[self.time_bump], label="Theta")
+                self.axes.plot(self.time, self.theta[self.time_bump], label="Theta", color='red')
             if len(self.rho) > 0:
                 if self.viewFill and len(self.option_price) > 0:
                     s = numpy.array(self.rho[self.rate_bump])
-                    self.axes.fill_between(self.time, p, s, where=s>=p, facecolor='white', interpolate=True)
+                    self.axes.fill_between(self.time, p, s, where=s>=p, facecolor='purple', interpolate=True)
                     self.axes.fill_between(self.time, p, s, where=s<=p, facecolor='red', interpolate=True)
-                self.axes.plot(self.time, self.rho[self.rate_bump], label="Rho")
+                self.axes.plot(self.time, self.rho[self.rate_bump], label="Rho", color='purple')
             if len(self.risidual) > 0:
                 if self.viewFill and len(self.option_price) > 0:
                     s = numpy.array(self.risidual[self.stock_bump])
                     self.axes.fill_between(self.time, p, s, where=s>=p, facecolor='black', interpolate=True)
                     self.axes.fill_between(self.time, p, s, where=s<=p, facecolor='red', interpolate=True)
-                self.axes.plot(self.time, self.risidual[self.stock_bump], label="Risidual")
+                self.axes.plot(self.time, self.risidual[self.stock_bump], label="Risidual", color='black')
 
             # set caption and axes labels
             self.axes.set_xlabel('Time (Daily)')
@@ -780,43 +783,43 @@ class PlotFrame(wx.Frame):
             p = numpy.array(map(float, self.option_price[self.stock_bump]))
         if True:
             if len(self.option_price) > 0:
-                self.axes.plot(self.time, self.option_price[self.stock_bump], label="Option Price")
+                self.axes.plot(self.time, self.option_price[self.stock_bump], label="Option Price", color='blue')
             if len(self.delta) > 0:
                 if self.viewFill and len(self.option_price) > 0:
                     s = numpy.array(self.delta[self.stock_bump])
                     self.axes.fill_between(self.time, p, s, where=s>=p, facecolor='green', interpolate=True)
                     self.axes.fill_between(self.time, p, s, where=s<=p, facecolor='red', interpolate=True)
-                self.axes.plot(self.delta[self.stock_bump], label="Delta")
+                self.axes.plot(self.delta[self.stock_bump], label="Delta", color='green')
             if len(self.gamma) > 0:
                 if self.viewFill and len(self.option_price) > 0:
                     s = numpy.array(self.gamma[self.stock_bump])
                     self.axes.fill_between(self.time, p, s, where=s>=p, facecolor='cyan', interpolate=True)
                     self.axes.fill_between(self.time, p, s, where=s<=p, facecolor='red', interpolate=True)
-                self.axes.plot(self.gamma[self.stock_bump], label="Gamma")
+                self.axes.plot(self.gamma[self.stock_bump], label="Gamma", color='cyan')
             if len(self.vega) > 0:
                 if self.viewFill and len(self.option_price) > 0:
                     s = numpy.array(self.vega[self.volitile_bump])
-                    self.axes.fill_between(self.time, p, s, where=s>=p, facecolor='yellow', interpolate=True)
+                    self.axes.fill_between(self.time, p, s, where=s>=p, facecolor='magenta', interpolate=True)
                     self.axes.fill_between(self.time, p, s, where=s<=p, facecolor='red', interpolate=True)
-                self.axes.plot(self.vega[self.volitile_bump], label="Vega")
+                self.axes.plot(self.vega[self.volitile_bump], label="Vega", color='magenta')
             if len(self.theta) > 0:
                 if self.viewFill and len(self.option_price) > 0:
                     s = numpy.array(self.theta[self.time_bump])
-                    self.axes.fill_between(self.time, p, s, where=s>=p, facecolor='blue', interpolate=True)
+                    self.axes.fill_between(self.time, p, s, where=s>=p, facecolor='yellow', interpolate=True)
                     self.axes.fill_between(self.time, p, s, where=s<=p, facecolor='red', interpolate=True)
-                self.axes.plot(self.time, self.theta[self.time_bump], label="Theta")
+                self.axes.plot(self.time, self.theta[self.time_bump], label="Theta", color='red')
             if len(self.rho) > 0:
                 if self.viewFill and len(self.option_price) > 0:
                     s = numpy.array(self.rho[self.rate_bump])
-                    self.axes.fill_between(self.time, p, s, where=s>=p, facecolor='white', interpolate=True)
+                    self.axes.fill_between(self.time, p, s, where=s>=p, facecolor='purple', interpolate=True)
                     self.axes.fill_between(self.time, p, s, where=s<=p, facecolor='red', interpolate=True)
-                self.axes.plot(self.time, self.rho[self.rate_bump], label="Rho")
+                self.axes.plot(self.time, self.rho[self.rate_bump], label="Rho", color='purple')
             if len(self.risidual) > 0:
                 if self.viewFill and len(self.option_price) > 0:
                     s = numpy.array(self.risidual[self.stock_bump])
                     self.axes.fill_between(self.time, p, s, where=s>=p, facecolor='black', interpolate=True)
                     self.axes.fill_between(self.time, p, s, where=s<=p, facecolor='red', interpolate=True)
-                self.axes.plot(self.time, self.risidual[self.stock_bump], label="Risidual")
+                self.axes.plot(self.time, self.risidual[self.stock_bump], label="Risidual", color='black')
 
         self.axes2 = self.fig.add_subplot(212)
         self.axes2.grid(self.viewGrid)
@@ -855,43 +858,43 @@ class PlotFrame(wx.Frame):
 
         if True:
             if len(self.option_price) > 0:
-                    self.line1, = self.axes2.plot(self.time_span_fill, self.option_price_fill, label="Option Price")
+                    self.line1, = self.axes2.plot(self.time_span_fill, self.option_price_fill, label="Option Price", color='blue')
             if len(self.delta) > 0:
                 if self.viewFill and len(self.option_price) > 0:
                     s = numpy.array(self.delta_fill)
                     self.axes2.fill_between(self.time_span_fill, p, s, where=s>=p, facecolor='green', interpolate=True)
                     self.axes2.fill_between(self.time_span_fill, p, s, where=s<=p, facecolor='red', interpolate=True)
-                self.line2, = self.axes2.plot(self.time_span_fill, self.delta_fill, label="Delta")
+                self.line2, = self.axes2.plot(self.time_span_fill, self.delta_fill, label="Delta", color='green')
             if len(self.gamma) > 0:
                 if self.viewFill and len(self.option_price) > 0:
                     s = numpy.array(self.gamma_fill)
                     self.axes2.fill_between(self.time_span_fill, p, s, where=s>=p, facecolor='cyan', interpolate=True)
                     self.axes2.fill_between(self.time_span_fill, p, s, where=s<=p, facecolor='red', interpolate=True)
-                self.line3, = self.axes2.plot(self.time_span_fill, self.gamma_fill, label="Gamma")
+                self.line3, = self.axes2.plot(self.time_span_fill, self.gamma_fill, label="Gamma", color='cyan')
             if len(self.theta) > 0:
                 if self.viewFill and len(self.option_price) > 0:
                     s = numpy.array(self.theta_fill)
-                    self.axes2.fill_between(self.time_span_fill, p, s, where=s>=p, facecolor='blue', interpolate=True)
+                    self.axes2.fill_between(self.time_span_fill, p, s, where=s>=p, facecolor='yellow', interpolate=True)
                     self.axes2.fill_between(self.time_span_fill, p, s, where=s<=p, facecolor='red', interpolate=True)
-                self.line4, = self.axes2.plot(self.time_span_fill, self.theta_fill, label="Theta")
+                self.line4, = self.axes2.plot(self.time_span_fill, self.theta_fill, label="Theta", color='red')
             if len(self.rho) > 0:
                 if self.viewFill and len(self.option_price) > 0:
                     s = numpy.array(self.rho_fill)
-                    self.axes2.fill_between(self.time_span_fill, p, s, where=s>=p, facecolor='white', interpolate=True)
+                    self.axes2.fill_between(self.time_span_fill, p, s, where=s>=p, facecolor='purple', interpolate=True)
                     self.axes2.fill_between(self.time_span_fill, p, s, where=s<=p, facecolor='red', interpolate=True)
-                self.line5, = self.axes2.plot(self.time_span_fill, self.rho_fill, label="Rho")
+                self.line5, = self.axes2.plot(self.time_span_fill, self.rho_fill, label="Rho", color='purple')
             if len(self.vega) > 0:
                 if self.viewFill and len(self.option_price) > 0:
                     s = numpy.array(self.vega_fill)
-                    self.axes2.fill_between(self.time_span_fill, p, s, where=s>=p, facecolor='yellow', interpolate=True)
+                    self.axes2.fill_between(self.time_span_fill, p, s, where=s>=p, facecolor='magenta', interpolate=True)
                     self.axes2.fill_between(self.time_span_fill, p, s, where=s<=p, facecolor='red', interpolate=True)
-                self.line6, = self.axes2.plot(self.time_span_fill, self.vega_fill, label="Vega")
+                self.line6, = self.axes2.plot(self.time_span_fill, self.vega_fill, label="Vega", color='magenta')
             if len(self.risidual) > 0:
                 if self.viewFill and len(self.option_price) > 0:
                     s = numpy.array(self.risidual_fill)
                     self.axes2.fill_between(self.time_span_fill, p, s, where=s>=p, facecolor='black', interpolate=True)
                     self.axes2.fill_between(self.time_span_fill, p, s, where=s<=p, facecolor='red', interpolate=True)
-                self.line7, = self.axes2.plot(self.time_span_fill, self.risidual_fill, label="Risidual")
+                self.line7, = self.axes2.plot(self.time_span_fill, self.risidual_fill, label="Risidual", color='black')
 
         # set limits for x and y axes
         self.axes2.set_xlim(self.time_span_fill[0], self.time_span_fill[-1])
@@ -937,32 +940,32 @@ class PlotFrame(wx.Frame):
         if len(self.delta) > 0:
             Z2D = [[float(string) for string in inner] for inner in self.delta]
             self.axes.plot_surface(X2D, Y2D, Z2D, rstride=1, cstride=1,
-                antialiased=False, alpha=0.75, color='b')
+                antialiased=False, alpha=0.75, color='green')
 
         if len(self.gamma) > 0:
             Z2D = [[float(string) for string in inner] for inner in self.gamma]
             self.axes.plot_surface(X2D, Y2D, Z2D, rstride=1, cstride=1,
-                antialiased=False, alpha=0.75, color='c')
+                antialiased=False, alpha=0.75, color='cyan')
                 
         if len(self.theta) > 0:
             Z2D = [[float(string) for string in inner] for inner in self.theta]
             self.axes.plot_surface(X2D, Y2D, Z2D, rstride=1, cstride=1,
-                antialiased=False, alpha=0.75, color='r')
+                antialiased=False, alpha=0.75, color='red')
                 
         if len(self.rho) > 0:
             Z2D = [[float(string) for string in inner] for inner in self.rho]
             self.axes.plot_surface(X2D, Y2D, Z2D, rstride=1, cstride=1,
-                antialiased=False, alpha=0.75, color='m')
+                antialiased=False, alpha=0.75, color='purple')
                 
         if len(self.vega) > 0:
             Z2D = [[float(string) for string in inner] for inner in self.vega]
             self.axes.plot_surface(X2D, Y2D, Z2D, rstride=1, cstride=1,
-                antialiased=False, alpha=0.75, color='g')
+                antialiased=False, alpha=0.75, color='magenta')
 
         if len(self.risidual) > 0:
             Z2D = [[float(string) for string in inner] for inner in self.risidual]
             self.axes.plot_surface(X2D, Y2D, Z2D, rstride=1, cstride=1,
-                antialiased=False, alpha=0.75, color='y')
+                antialiased=False, alpha=0.75, color='black')
         
         #~ cset = self.axes.contour(X2D, Y2D, Z2D, zdir='z', offset=0, cmap=cm.coolwarm)
         #cset = self.axes.contour(X2D, Y2D, Z2D, zdir='x', offset=0, cmap=cm.coolwarm)
