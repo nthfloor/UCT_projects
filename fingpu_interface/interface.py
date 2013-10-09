@@ -363,7 +363,7 @@ class PlotFrame(wx.Frame):
         menuBar.Append(f1, "&View")
 
         f2 = wx.Menu()
-        f2.Append(MENU_HELP, "&Quick Reference",  "Quick Reference")
+        f2.Append(MENU_HELP, "Quick &Reference",  "Quick Reference")
         f2.Append(MENU_ABOUT, "&About",  "About this interface")
         menuBar.Append(f2, "&Help")
 
