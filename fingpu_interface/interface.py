@@ -539,8 +539,8 @@ class PlotFrame(wx.Frame):
         if self.fillCheck.IsChecked():
             if self.differenceCheck.IsChecked():
                 warning_msg = """
-                This setting is incompatible with the difference settings.
                 The difference setting needs to be disabled.
+                Fill is incompatible with difference setting.
 
                 Do you want to continue?
                 """
