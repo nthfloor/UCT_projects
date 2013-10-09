@@ -94,7 +94,7 @@ class PlotFrame(wx.Frame):
         self.Build_Panel()
         self.statusbar = self.CreateStatusBar()
         self.Plot_Data()
-        self.SetSize(size=(850, 540))
+        self.SetSize(size=(850, 550))
 
     # on span-selection of graph
     def onselect(self, xmin, xmax):
@@ -713,7 +713,6 @@ class PlotFrame(wx.Frame):
                 self.axes.plot(self.time, self.option_price[self.stock_bump], label="Option Price", color='blue')
             if len(self.delta) > 0:
                 if self.viewFill and len(self.option_price) > 0:
-
                     s = numpy.array(self.delta[self.stock_bump])
                     self.axes.fill_between(self.time, p, s, where=s>=p, facecolor='green', interpolate=True)
                     self.axes.fill_between(self.time, p, s, where=s<=p, facecolor='red', interpolate=True)
