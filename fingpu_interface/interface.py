@@ -21,6 +21,8 @@ from matplotlib.widgets import SpanSelector
 from mpl_toolkits.mplot3d import axes3d
 from matplotlib import cm
 
+from mayavi import mlab
+
 
 class PlotFrame(wx.Frame):
     help_msg="""  Menus for
@@ -932,9 +934,13 @@ class PlotFrame(wx.Frame):
         if len(self.option_price) > 0:
             Z2D = [[float(string) for string in inner] for inner in self.option_price]            
             surf = self.axes.plot_surface(X2D, Y2D, Z2D, rstride=1, cstride=1,
-                antialiased=False, alpha=0.75, cmap=cm.afmhot)  #cm.coolwarm
+                antialiased=False, alpha=0.75, cmap=cm.afmhot, zorder=0.5)  #cm.coolwarm, cm.winter, cm.autumn
             cbar = self.fig.colorbar(surf, shrink=0.5, aspect=5)
             cbar.set_label('Option Proce', rotation=90)
+
+            # X2D, Y2D = numpy.mgrid(self.time, b)
+            # s = mlab.surf(Z2D)
+            # mlab.show()
 
         # plot greek surfaces
         if len(self.delta) > 0:
@@ -968,9 +974,9 @@ class PlotFrame(wx.Frame):
                 antialiased=False, alpha=0.75, color='black')
         
         if Z2D != None:
-            cset1 = self.axes.contourf(X2D, Y2D, Z2D, zdir='z', offset=300, cmap=cm.afmhot)
+            # cset1 = self.axes.contourf(X2D, Y2D, Z2D, zdir='z', offset=300, cmap=cm.afmhot)
             cset2 = self.axes.contourf(X2D, Y2D, Z2D, zdir='x', offset=0, cmap=cm.coolwarm)
-            cset3 = self.axes.contour(X2D, Y2D, Z2D, zdir='y', offset=-0.3, cmap=cm.afmhot)
+            cset3 = self.axes.contour(X2D, Y2D, Z2D, zdir='y', offset=-0.3, cmap=cm.winter)
             # cset = self.axes.contour(X2D, Y2D, Z2D, zdir='y', offset=10, cmap=cm.afmhot)
             # cbar = self.fig.colorbar(cset1, shrink=0.7, aspect=3)
             # cbar = self.fig.colorbar(cset2, shrink=0.7, aspect=3)
