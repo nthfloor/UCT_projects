@@ -439,7 +439,7 @@ class PlotFrame(wx.Frame):
         
         # hide slider panel since will not be used
         self.sliderPanel.Disable()
-        self.toolbar.Hide()
+        self.toolbar.Disable()
         self.fillCheck.Disable()
         self.panel.Layout()
         
