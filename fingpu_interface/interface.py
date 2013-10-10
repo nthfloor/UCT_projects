@@ -64,7 +64,7 @@ class PlotFrame(wx.Frame):
         self.Build_Panel()
         self.statusbar = self.CreateStatusBar()
         self.Plot_Data()
-        self.SetSize(size=(850, 550))
+        self.SetSize(size=(900, 550))
 
     def reInitialiseData(self):
         self.fileReader = csvReader.Reader()
@@ -553,35 +553,21 @@ class PlotFrame(wx.Frame):
     def onShowFillEffect(self, event=None):
         if self.fillCheck.IsChecked():
             if self.differenceCheck.IsChecked():
-                warning_msg = """
-                The difference setting needs to be disabled.
-                Fill is incompatible with difference setting.
-
-                Do you want to continue?
-                """
-                dlg = wx.MessageDialog(self, warning_msg, "Warning", wx.YES_NO | wx.ICON_INFORMATION)
-                ret = dlg.ShowModal()
-                if ret == wx.ID_NO:
-                    dlg.Destroy()
-                    self.fillCheck.SetValue(False)
-                    self.viewFill = False
-                    return
-                else:
-                    self.differenceCheck.SetValue(False)
-                    # reload and replot data
-                    self.delta = self.fileReader.getDeltaValues(self.callRadio.GetValue(), 
-                        self.deltaCheck.IsChecked(), self.differenceCheck.IsChecked(), self.effectCheck.IsChecked())
-                    self.gamma = self.fileReader.getGammaValues(self.callRadio.GetValue(), 
-                        self.gammaCheck.IsChecked(), self.differenceCheck.IsChecked(), self.effectCheck.IsChecked())
-                    # self.vega = self.fileReader.getVegaValues(self.callRadio.GetValue(), 
-                    #    self.vegaCheck.IsChecked(), self.differenceCheck.IsChecked(), self.effectCheck.IsChecked())
-                    self.theta = self.fileReader.getThetaValues(self.callRadio.GetValue(), 
-                        self.thetaCheck.IsChecked(), self.differenceCheck.IsChecked(), self.effectCheck.IsChecked())
-                    self.rho = self.fileReader.getRhoValues(self.callRadio.GetValue(), 
-                        self.rhoCheck.IsChecked(), self.differenceCheck.IsChecked(), self.effectCheck.IsChecked())
-                    self.risidual = self.fileReader.getRisidualValues(self.callRadio.GetValue(), self.risidualCheck.IsChecked(),
-                        self.differenceCheck.IsChecked(), self.effectCheck.IsChecked())
-                dlg.Destroy()
+                self.differenceCheck.SetValue(False)
+                # reload and replot data
+                self.delta = self.fileReader.getDeltaValues(self.callRadio.GetValue(), 
+                    self.deltaCheck.IsChecked(), self.differenceCheck.IsChecked(), self.effectCheck.IsChecked())
+                self.gamma = self.fileReader.getGammaValues(self.callRadio.GetValue(), 
+                    self.gammaCheck.IsChecked(), self.differenceCheck.IsChecked(), self.effectCheck.IsChecked())
+                # self.vega = self.fileReader.getVegaValues(self.callRadio.GetValue(), 
+                #    self.vegaCheck.IsChecked(), self.differenceCheck.IsChecked(), self.effectCheck.IsChecked())
+                self.theta = self.fileReader.getThetaValues(self.callRadio.GetValue(), 
+                    self.thetaCheck.IsChecked(), self.differenceCheck.IsChecked(), self.effectCheck.IsChecked())
+                self.rho = self.fileReader.getRhoValues(self.callRadio.GetValue(), 
+                    self.rhoCheck.IsChecked(), self.differenceCheck.IsChecked(), self.effectCheck.IsChecked())
+                self.risidual = self.fileReader.getRisidualValues(self.callRadio.GetValue(), self.risidualCheck.IsChecked(),
+                    self.differenceCheck.IsChecked(), self.effectCheck.IsChecked())
+            
             self.viewFill = True
         else:
             self.viewFill = False
@@ -691,23 +677,9 @@ class PlotFrame(wx.Frame):
         self.Plot_Data()
 
     def onDifferenceCheck(self, event=None):
-        if self.fillCheck.IsChecked():
-            warning_msg = """
-                This setting is incompatible with the fill setting.
-                The fill setting needs to be disabled.
-
-                Do you want to continue?
-            """
-            dlg = wx.MessageDialog(self, warning_msg, "Take Note", wx.YES_NO | wx.ICON_INFORMATION)
-            ret = dlg.ShowModal()
-            if ret == wx.ID_NO:
-                dlg.Destroy()
-                self.differenceCheck.SetValue(False)
-                return
-            else:
-                self.fillCheck.SetValue(False)
-                self.viewFill = False
-            dlg.Destroy()
+        if self.fillCheck.IsChecked():    
+            self.fillCheck.SetValue(False)
+            self.viewFill = False
 
         # reload and replot data
         self.delta = self.fileReader.getDeltaValues(self.callRadio.GetValue(), 
@@ -943,11 +915,13 @@ class PlotFrame(wx.Frame):
         self.Plotter_2D_general(self.axes)
 
         # plot strike price and stock price curve
-        self.axes2.plot([0, 30], [self.strike_price, self.strike_price], label="Strike Price", color='red')
+        if self.strike_price > 0:
+            self.axes2.plot([0, 30], [self.strike_price, self.strike_price], label="Strike Price", color='red')
 
         # plot stock price curve
         temp_stock_price = numpy.array(self.stock_price)
-        self.axes2.plot(self.time, temp_stock_price, label="Stock Price", color='blue')
+        if len(temp_stock_price) > 0:
+            self.axes2.plot(self.time, temp_stock_price, label="Stock Price", color='blue')
 
         # set limits for x and y axes
         # self.axes2.set_xlim(self.time_span_fill[0], self.time_span_fill[-1])
