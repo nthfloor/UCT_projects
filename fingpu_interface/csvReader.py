@@ -14,6 +14,7 @@ class Reader():
         self.put_option_data = []
         self.call_option_data = []
         self.interest_rate_data = []
+        self.strike_price = 0
 
         # greek data sets
         self.delta = []
@@ -80,6 +81,9 @@ class Reader():
 
         # retrieve input data
         for row in myfile:
+            # get strike price
+            if counter == 4:
+                self.strike_price = float(row[0].split(' ')[1])
             # get stock prices
             if counter >= 15 and counter <= 45:
                 self.stock_price_data.append(row[0].split(' ')[1])
@@ -94,6 +98,12 @@ class Reader():
         ifile.close()
 
     """ Getters """
+    def getStrikePrice(self):
+        return self.strike_price
+
+    def getStockPrice(self):
+        return map(float, self.stock_price_data)
+
     def getOptionPrice(self, useCallOptionData=True, viewOptionPriceValues=True):
         temp = []
         tempOption = []

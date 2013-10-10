@@ -27,14 +27,15 @@ fi
 
 if [ $1 == "-c" ]
 then
+    cd fingpu_interface/
     rm *.pyc
+    cd ..
     echo "cleaned directory"
 fi
 
 if [ $1 == "-r" ]
 then
-    echo "runapp"
-    python runapp.py
+    python fingpu_interface/runapp.py
 fi
 
 if [ $1 == "-o" ]
