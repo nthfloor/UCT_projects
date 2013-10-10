@@ -17,7 +17,8 @@ import csvReader
 matplotlib.use('WXAgg')
 from matplotlib.backends.backend_wxagg import FigureCanvasWxAgg as FigCanvas, NavigationToolbar2WxAgg as NavigationToolbar
 from matplotlib.figure import Figure
-from matplotlib.widgets import SpanSelector
+from matplotlib.lines import Line2D
+# from matplotlib.widgets import SpanSelector
 from mpl_toolkits.mplot3d import axes3d
 from matplotlib import cm
 
@@ -56,6 +57,16 @@ class PlotFrame(wx.Frame):
         wx.Frame.__init__(self, None, -1, "Visualise Option Prices and Greeks", size=(300, 500))
         self.Bind(wx.EVT_KEY_DOWN, self.onKeyEvent)
 
+        self.reInitialiseData()
+        
+        # build interface
+        self.Build_Menus()
+        self.Build_Panel()
+        self.statusbar = self.CreateStatusBar()
+        self.Plot_Data()
+        self.SetSize(size=(850, 550))
+
+    def reInitialiseData(self):
         self.fileReader = csvReader.Reader()
         self.viewLegend = False
         self.viewGrid = True
@@ -90,13 +101,6 @@ class PlotFrame(wx.Frame):
         self.time_bump = 0
         self.rate_bump = 0
         self.volitile_bump = 0
-        
-        # build interface
-        self.Build_Menus()
-        self.Build_Panel()
-        self.statusbar = self.CreateStatusBar()
-        self.Plot_Data()
-        self.SetSize(size=(850, 550))
 
     # on span-selection of graph
     def onselect(self, xmin, xmax):
@@ -207,10 +211,6 @@ class PlotFrame(wx.Frame):
         self.rateSlider = wx.Slider(self.sliderPanel, value=5, minValue=1, maxValue=9, 
             pos=(20, 20), size=(100,-1), style=wx.SL_HORIZONTAL|wx.SL_AUTOTICKS)
         self.rateSlider.SetTickFreq(1, 1)
-        self.volatilSlider_label = wx.StaticText(self.sliderPanel, -1, "Volatility: ")
-        self.volatilSlider = wx.Slider(self.sliderPanel, value=5, minValue=1, maxValue=9, 
-            pos=(20, 20), size=(100,-1), style=wx.SL_HORIZONTAL|wx.SL_AUTOTICKS)
-        self.volatilSlider.SetTickFreq(1, 1)
         self.timeStepSlider_label = wx.StaticText(self.sliderPanel, -1, "Time Step: ")
         self.timeStepSlider = wx.Slider(self.sliderPanel, value=5, minValue=1, maxValue=9, 
             pos=(20, 20), size=(100,-1), style=wx.SL_HORIZONTAL|wx.SL_AUTOTICKS)
@@ -218,7 +218,6 @@ class PlotFrame(wx.Frame):
 
         self.Bind(wx.EVT_SLIDER, self.onStockSlider, self.stockSlider)
         self.Bind(wx.EVT_SLIDER, self.onRateSlider, self.rateSlider)
-        self.Bind(wx.EVT_SLIDER, self.onVolatilSlider, self.volatilSlider)
         self.Bind(wx.EVT_SLIDER, self.ontimeStepSlider, self.timeStepSlider)        
 
         # setup options-widgets for controlling graphs
@@ -227,13 +226,12 @@ class PlotFrame(wx.Frame):
         self.callRadio.SetValue(True)        
         self.spaceKeeper = wx.StaticText(self.panel, -1, '')
         self.optionPriceCheck = wx.CheckBox(self.panel, label="view Option Price", pos=(20, 20))
-        self.deltaCheck = wx.CheckBox(self.panel, label="show Delta effect", pos=(20, 20))
+        self.deltaCheck = wx.CheckBox(self.panel, label="show Delta", pos=(20, 20))
         self.gammaCheck = wx.CheckBox(self.panel, label="show Gamma", pos=(20, 20))
         self.rhoCheck = wx.CheckBox(self.panel, label="show Rho", pos=(20, 20))
         self.thetaCheck = wx.CheckBox(self.panel, label="show Theta", pos=(20, 20))
-        self.vegaCheck = wx.CheckBox(self.panel, label="show Vega", pos=(20, 20))
         self.fillCheck = wx.CheckBox(self.panel, label="show fill feature", pos=(20, 20))
-        self.risidualCheck = wx.CheckBox(self.panel, label="Show Risidual", pos=(20, 20))
+        self.risidualCheck = wx.CheckBox(self.panel, label="Show Residual", pos=(20, 20))
         self.differenceCheck = wx.CheckBox(self.panel, label="Show Difference", pos=(20, 20))
         self.effectCheck = wx.CheckBox(self.panel, label="Show Greek's effect on option price", pos=(20, 20))
         self.effectCheck.SetValue(True)
@@ -245,7 +243,6 @@ class PlotFrame(wx.Frame):
         self.Bind(wx.EVT_CHECKBOX, self.onGamma, self.gammaCheck)
         self.Bind(wx.EVT_CHECKBOX, self.onRho, self.rhoCheck)
         self.Bind(wx.EVT_CHECKBOX, self.onTheta, self.thetaCheck)
-        self.Bind(wx.EVT_CHECKBOX, self.onVega, self.vegaCheck)
         self.Bind(wx.EVT_CHECKBOX, self.onRisidual, self.risidualCheck)
         self.Bind(wx.EVT_CHECKBOX, self.onDifferenceCheck, self.differenceCheck)
         self.Bind(wx.EVT_CHECKBOX, self.onShowEffects, self.effectCheck)
@@ -270,9 +267,7 @@ class PlotFrame(wx.Frame):
         self.sliderStaticBox = wx.StaticBox(self.sliderPanel, -1, 'Bump Sliders')
         self.sliderBorder = wx.StaticBoxSizer(self.sliderStaticBox, orient=wx.VERTICAL)
         self.flexiGridSizer.AddMany([(self.stockSlider_label), (self.stockSlider, 1, wx.ALL), 
-            (self.rateSlider_label), (self.rateSlider, 1, wx.EXPAND),
-            (self.volatilSlider_label), (self.volatilSlider, 1, wx.EXPAND),
-            (self.timeStepSlider_label), (self.timeStepSlider, 1, wx.EXPAND)])
+            (self.rateSlider_label), (self.rateSlider, 1, wx.EXPAND), (self.timeStepSlider_label), (self.timeStepSlider, 1, wx.EXPAND)])
         self.sliderBorder.Add(self.flexiGridSizer, 1, wx.ALL, 5)
         self.sliderPanel.SetSizer(self.sliderBorder)
         self.vboxOptions.Add(self.sliderPanel, 0, flag=wx.ALIGN_LEFT|wx.ALL)
@@ -287,10 +282,9 @@ class PlotFrame(wx.Frame):
         
         # add border for greeks
         self.greekOptionsBorder = wx.StaticBoxSizer(wx.StaticBox(self.panel, -1, 'Greek effect Options'), orient=wx.VERTICAL)
-        self.flexiOptions2 = wx.FlexGridSizer(7, 1, 3, 10)
+        self.flexiOptions2 = wx.FlexGridSizer(6, 1, 3, 10)
         self.flexiOptions2.AddMany([(self.deltaCheck, 1, wx.EXPAND), (self.gammaCheck, 1, wx.EXPAND), 
-            (self.rhoCheck, 1, wx.EXPAND), (self.thetaCheck, 1, wx.EXPAND), (self.vegaCheck, 1, wx.EXPAND), 
-            (self.risidualCheck, 1, wx.EXPAND)])
+            (self.rhoCheck, 1, wx.EXPAND), (self.thetaCheck, 1, wx.EXPAND), (self.risidualCheck, 1, wx.EXPAND)])
         self.greekOptionsBorder.Add(self.flexiOptions2, 1, wx.ALL, 5)
         self.vboxOptions.Add(self.greekOptionsBorder, 1, flag=wx.ALIGN_LEFT|wx.ALL|wx.GROW)
         #self.vboxOptions.AddSpacer(5)
@@ -396,19 +390,35 @@ class PlotFrame(wx.Frame):
             self.Plot_Data()
         else:
             self.viewLegend = True
+            # use proxy artist
+            plot_op = Line2D([], [], linewidth=3, color="black") 
+            plot_delta = Line2D([], [], linewidth=3, color="royalblue") 
+            plot_gamma = Line2D([], [], linewidth=3, color="cyan") 
+            plot_theta = Line2D([], [], linewidth=3, color="green") 
+            plot_rho = Line2D([], [], linewidth=3, color="darkorange") 
+            plot_risidual = Line2D([], [], linewidth=3, color="purple")
+
             # Shink current axis by 15%
             box = self.axes.get_position()
             self.axes.set_position([box.x0, box.y0, box.width * 0.88, box.height])
             # Put a legend to the right of the current axis
-            self.axes.legend(loc='center left', bbox_to_anchor=(1, 0.5), prop={'size':8})
+            self.axes.legend([plot_op, plot_delta, plot_gamma, plot_theta, plot_rho, plot_risidual], ['Option Price', 'Delta', 'Gamma', 'Theta', 'Rho', 'Residual'],
+                loc='center left', bbox_to_anchor=(1, 0.5), prop={'size':8})
+
+            if self.current_view == 1:
+                box = self.axes2.get_position()
+                self.axes2.set_position([box.x0, box.y0, box.width * 0.88, box.height])
+                # Put a legend to the right of the current axis
+                self.axes2.legend(loc='center left', bbox_to_anchor=(1, 0.5), prop={'size':8})
             self.canvas.draw()
 
     def onBasicView(self, event=None):
         self.current_view = 0
         
         # show sliders panel
-        self.sliderPanel.Show()
+        self.sliderPanel.Enable()
         self.toolbar.Show()
+        self.fillCheck.Enable()
         self.panel.Layout()
         
         self.Plot_Data()
@@ -417,8 +427,9 @@ class PlotFrame(wx.Frame):
         self.current_view = 1
         
         # show sliders panel
-        self.sliderPanel.Show()
+        self.sliderPanel.Enable()
         self.toolbar.Show()
+        self.fillCheck.Enable()
         self.panel.Layout()
         
         self.Plot_Data()
@@ -427,8 +438,9 @@ class PlotFrame(wx.Frame):
         self.current_view = 2
         
         # hide slider panel since will not be used
-        self.sliderPanel.Hide()
+        self.sliderPanel.Disable()
         self.toolbar.Hide()
+        self.fillCheck.Disable()
         self.panel.Layout()
         
         self.Plot_Data()
@@ -508,6 +520,7 @@ class PlotFrame(wx.Frame):
             path = dlg.GetPath()
             projectDir = path.rsplit('/', 1)[0]
             #projectDir = path.rsplit('\\', 1)[0]
+            self.reInitialiseData()
             
             # this also involves reading in all the data
             self.number_bumps = self.fileReader.loadSettingsFile(path, projectDir, self.statusbar)
@@ -524,7 +537,7 @@ class PlotFrame(wx.Frame):
         self.option_price = self.fileReader.getOptionPrice(self.callRadio.GetValue(), self.optionPriceCheck.IsChecked())
         self.delta = self.fileReader.getDeltaValues(self.callRadio.GetValue(), self.deltaCheck.IsChecked())
         self.gamma = self.fileReader.getGammaValues(self.callRadio.GetValue(), self.gammaCheck.IsChecked())
-        self.vega = self.fileReader.getVegaValues(self.callRadio.GetValue(), self.vegaCheck.IsChecked())
+        # self.vega = self.fileReader.getVegaValues(self.callRadio.GetValue(), self.vegaCheck.IsChecked())
         self.theta = self.fileReader.getThetaValues(self.callRadio.GetValue(), self.thetaCheck.IsChecked())
         self.rho = self.fileReader.getRhoValues(self.callRadio.GetValue(), self.rhoCheck.IsChecked())
 
@@ -546,7 +559,7 @@ class PlotFrame(wx.Frame):
 
                 Do you want to continue?
                 """
-                dlg = wx.MessageDialog(self, warning_msg, "Warning", wx.YES_NO | wx.ICON_ERROR)
+                dlg = wx.MessageDialog(self, warning_msg, "Warning", wx.YES_NO | wx.ICON_INFORMATION)
                 ret = dlg.ShowModal()
                 if ret == wx.ID_NO:
                     dlg.Destroy()
@@ -560,8 +573,8 @@ class PlotFrame(wx.Frame):
                         self.deltaCheck.IsChecked(), self.differenceCheck.IsChecked(), self.effectCheck.IsChecked())
                     self.gamma = self.fileReader.getGammaValues(self.callRadio.GetValue(), 
                         self.gammaCheck.IsChecked(), self.differenceCheck.IsChecked(), self.effectCheck.IsChecked())
-                    self.vega = self.fileReader.getVegaValues(self.callRadio.GetValue(), 
-                        self.vegaCheck.IsChecked(), self.differenceCheck.IsChecked(), self.effectCheck.IsChecked())
+                    # self.vega = self.fileReader.getVegaValues(self.callRadio.GetValue(), 
+                    #    self.vegaCheck.IsChecked(), self.differenceCheck.IsChecked(), self.effectCheck.IsChecked())
                     self.theta = self.fileReader.getThetaValues(self.callRadio.GetValue(), 
                         self.thetaCheck.IsChecked(), self.differenceCheck.IsChecked(), self.effectCheck.IsChecked())
                     self.rho = self.fileReader.getRhoValues(self.callRadio.GetValue(), 
@@ -581,8 +594,8 @@ class PlotFrame(wx.Frame):
             self.deltaCheck.IsChecked(), self.differenceCheck.IsChecked(), self.effectCheck.IsChecked())
         self.gamma = self.fileReader.getGammaValues(self.callRadio.GetValue(), 
             self.gammaCheck.IsChecked(), self.differenceCheck.IsChecked(), self.effectCheck.IsChecked())
-        self.vega = self.fileReader.getVegaValues(self.callRadio.GetValue(), 
-            self.vegaCheck.IsChecked(), self.differenceCheck.IsChecked(), self.effectCheck.IsChecked())
+        # self.vega = self.fileReader.getVegaValues(self.callRadio.GetValue(), 
+        #     self.vegaCheck.IsChecked(), self.differenceCheck.IsChecked(), self.effectCheck.IsChecked())
         self.theta = self.fileReader.getThetaValues(self.callRadio.GetValue(), 
             self.thetaCheck.IsChecked(), self.differenceCheck.IsChecked(), self.effectCheck.IsChecked())
         self.rho = self.fileReader.getRhoValues(self.callRadio.GetValue(), 
@@ -598,8 +611,8 @@ class PlotFrame(wx.Frame):
             self.deltaCheck.IsChecked(), self.differenceCheck.IsChecked(), self.effectCheck.IsChecked())
         self.gamma = self.fileReader.getGammaValues(self.callRadio.GetValue(), 
             self.gammaCheck.IsChecked(), self.differenceCheck.IsChecked(), self.effectCheck.IsChecked())
-        self.vega = self.fileReader.getVegaValues(self.callRadio.GetValue(), 
-            self.vegaCheck.IsChecked(), self.differenceCheck.IsChecked(), self.effectCheck.IsChecked())
+        # self.vega = self.fileReader.getVegaValues(self.callRadio.GetValue(), 
+        #     self.vegaCheck.IsChecked(), self.differenceCheck.IsChecked(), self.effectCheck.IsChecked())
         self.theta = self.fileReader.getThetaValues(self.callRadio.GetValue(), 
             self.thetaCheck.IsChecked(), self.differenceCheck.IsChecked(), self.effectCheck.IsChecked())
         self.rho = self.fileReader.getRhoValues(self.callRadio.GetValue(), 
@@ -666,8 +679,8 @@ class PlotFrame(wx.Frame):
             self.deltaCheck.IsChecked(), self.differenceCheck.IsChecked(), self.effectCheck.IsChecked())
         self.gamma = self.fileReader.getGammaValues(self.callRadio.GetValue(), 
             self.gammaCheck.IsChecked(), self.differenceCheck.IsChecked(), self.effectCheck.IsChecked())
-        self.vega = self.fileReader.getVegaValues(self.callRadio.GetValue(), 
-            self.vegaCheck.IsChecked(), self.differenceCheck.IsChecked(), self.effectCheck.IsChecked())
+        # self.vega = self.fileReader.getVegaValues(self.callRadio.GetValue(), 
+        #     self.vegaCheck.IsChecked(), self.differenceCheck.IsChecked(), self.effectCheck.IsChecked())
         self.theta = self.fileReader.getThetaValues(self.callRadio.GetValue(), 
             self.thetaCheck.IsChecked(), self.differenceCheck.IsChecked(), self.effectCheck.IsChecked())
         self.rho = self.fileReader.getRhoValues(self.callRadio.GetValue(), 
@@ -685,7 +698,7 @@ class PlotFrame(wx.Frame):
 
                 Do you want to continue?
             """
-            dlg = wx.MessageDialog(self, warning_msg, "Take Note", wx.YES_NO | wx.ICON_ERROR)
+            dlg = wx.MessageDialog(self, warning_msg, "Take Note", wx.YES_NO | wx.ICON_INFORMATION)
             ret = dlg.ShowModal()
             if ret == wx.ID_NO:
                 dlg.Destroy()
@@ -701,8 +714,8 @@ class PlotFrame(wx.Frame):
             self.deltaCheck.IsChecked(), self.differenceCheck.IsChecked(), self.effectCheck.IsChecked())
         self.gamma = self.fileReader.getGammaValues(self.callRadio.GetValue(), 
             self.gammaCheck.IsChecked(), self.differenceCheck.IsChecked(), self.effectCheck.IsChecked())
-        self.vega = self.fileReader.getVegaValues(self.callRadio.GetValue(), 
-            self.vegaCheck.IsChecked(), self.differenceCheck.IsChecked(), self.effectCheck.IsChecked())
+        # self.vega = self.fileReader.getVegaValues(self.callRadio.GetValue(), 
+        #     self.vegaCheck.IsChecked(), self.differenceCheck.IsChecked(), self.effectCheck.IsChecked())
         self.theta = self.fileReader.getThetaValues(self.callRadio.GetValue(), 
             self.thetaCheck.IsChecked(), self.differenceCheck.IsChecked(), self.effectCheck.IsChecked())
         self.rho = self.fileReader.getRhoValues(self.callRadio.GetValue(), 
@@ -713,25 +726,21 @@ class PlotFrame(wx.Frame):
 
     def onStockSlider(self, event=None):
         self.statusbar.SetStatusText("Stock price bump: "+str(self.stockSlider.GetValue()))
-        # print(self.stockSlider.GetValue()-1)
         self.stock_bump = self.stockSlider.GetValue()-1
         self.Plot_Data()
 
     def onRateSlider(self, event=None):
         self.statusbar.SetStatusText("Interest Rate bump: "+str(self.rateSlider.GetValue()))
-        # print(self.stockSlider.GetValue()-1)
         self.rate_bump = self.rateSlider.GetValue()-1
         self.Plot_Data()
 
     def onVolatilSlider(self, event=None):
         self.statusbar.SetStatusText("Volatility bump: "+str(self.volatilSlider.GetValue()))
-        # print(self.stockSlider.GetValue()-1)
         self.volitile_bump = self.volatilSlider.GetValue()-1
         self.Plot_Data()
 
     def ontimeStepSlider(self, event=None):
         self.statusbar.SetStatusText("Time step bump: "+str(self.timeStepSlider.GetValue()))
-        # print(self.stockSlider.GetValue()-1)
         self.time_bump = self.timeStepSlider.GetValue()-1
         self.Plot_Data()
         self.Plot_Data()
@@ -748,7 +757,7 @@ class PlotFrame(wx.Frame):
         if len(self.option_price) > 0:
             temp_option_price = numpy.array(map(float, self.option_price[self.stock_bump]))
         if len(self.option_price) > 0:
-            axes.plot(self.time, self.option_price[self.stock_bump], label="Option Price", color='black')
+            axes.plot(self.time, self.option_price[self.stock_bump], color='black')
         
         # stagger plot effects of greeks 
         temp_delta = []
@@ -766,13 +775,11 @@ class PlotFrame(wx.Frame):
             temp_theta = numpy.array(self.theta[self.time_bump])
         if len(self.risidual) > 0:
             temp_risidual = numpy.array(self.risidual[self.stock_bump])
-        # print(temp_theta)
 
-        if not self.differenceCheck.IsChecked():
+        if not self.differenceCheck.IsChecked() and len(temp_option_price) > 0:
             for t in self.time:
                 greeks_below = []
                 greeks_above = []  # above/below option price
-                # print(t, len(temp_delta), len(temp_option_price))
                 if t < 30:
                     # sort arrays
                     if len(temp_delta) > 0:
@@ -861,21 +868,36 @@ class PlotFrame(wx.Frame):
                         if g[1] == 'risidual':
                             axes.plot(temp_time, temp2, label="risidual", color='purple')
                         temp1 = temp2
-
-        # plot difference between greeks and option price
-        if self.differenceCheck.IsChecked():
+        else:
+            # plot difference between greeks and option price
             if len(self.delta) > 0:
-                axes.plot(self.delta[self.stock_bump], label="Delta", color='blue')
+                axes.plot(self.delta[self.stock_bump], color='blue')
             if len(self.gamma) > 0:
-                axes.plot(self.gamma[self.stock_bump], label="Gamma", color='cyan')
-            if len(self.vega) > 0:
-                axes.plot(self.vega[self.volitile_bump], label="Vega", color='yellow')
+                axes.plot(self.gamma[self.stock_bump], color='cyan')
+            # if len(self.vega) > 0:
+            #    axes.plot(self.vega[self.volitile_bump], label="Vega", color='yellow')
             if len(self.theta) > 0:
-                axes.plot(self.time, self.theta[self.time_bump], label="Theta", color='green')
+                axes.plot(self.time, self.theta[self.time_bump], color='green')
             if len(self.rho) > 0:
-                axes.plot(self.time, self.rho[self.rate_bump], label="Rho", color='darkorange')
+                axes.plot(self.time, self.rho[self.rate_bump], color='darkorange')
             if len(self.risidual) > 0:
-                axes.plot(self.time, self.risidual[self.stock_bump], label="Risidual", color='purple')
+                axes.plot(self.time, self.risidual[self.stock_bump], color='purple')
+
+        if self.viewLegend:
+            # use proxy artist
+            plot_op = Line2D([], [], linewidth=3, color="black") 
+            plot_delta = Line2D([], [], linewidth=3, color="royalblue") 
+            plot_gamma = Line2D([], [], linewidth=3, color="cyan") 
+            plot_theta = Line2D([], [], linewidth=3, color="green") 
+            plot_rho = Line2D([], [], linewidth=3, color="darkorange") 
+            plot_risidual = Line2D([], [], linewidth=3, color="purple")
+
+            # Shink current axis by 15%
+            box = axes.get_position()
+            axes.set_position([box.x0, box.y0, box.width * 0.88, box.height])
+            # Put a legend to the right of the current axis
+            axes.legend([plot_op, plot_delta, plot_gamma, plot_theta, plot_rho, plot_risidual], ['Option Price', 'Delta', 'Gamma', 'Theta', 'Rho', 'Residual'],
+                loc='center left', bbox_to_anchor=(1, 0.5), prop={'size':8})
 
     def Plot_Data(self):
         if self.current_view == 1:
@@ -907,13 +929,6 @@ class PlotFrame(wx.Frame):
                 else:
                     self.title = self.fig.suptitle('Greek values not in terms of option price')
 
-            if self.viewLegend:
-                # Shink current axis by 15%
-                box = self.axes.get_position()
-                self.axes.set_position([box.x0, box.y0, box.width * 0.88, box.height])
-                # Put a legend to the right of the current axis
-                self.axes.legend(loc='center left', bbox_to_anchor=(1, 0.5), prop={'size':8})
-
             self.canvas.draw()
 
     def Plot_Data_advanced(self):
@@ -928,11 +943,11 @@ class PlotFrame(wx.Frame):
         self.Plotter_2D_general(self.axes)
 
         # plot strike price and stock price curve
-        self.axes2.plot([0, 30], [self.strike_price, self.strike_price], 'r')
+        self.axes2.plot([0, 30], [self.strike_price, self.strike_price], label="Strike Price", color='red')
 
         # plot stock price curve
         temp_stock_price = numpy.array(self.stock_price)
-        self.axes2.plot(self.time, temp_stock_price, 'b')
+        self.axes2.plot(self.time, temp_stock_price, label="Stock Price", color='blue')
 
         # set limits for x and y axes
         # self.axes2.set_xlim(self.time_span_fill[0], self.time_span_fill[-1])
@@ -947,11 +962,11 @@ class PlotFrame(wx.Frame):
         # self.span = SpanSelector(self.axes, self.onselect, 'horizontal', useblit=True, rectprops=dict(alpha=0.5, facecolor='red'))
 
         if self.viewLegend:
-                # Shink current axis by 15%
-                box = self.axes.get_position()
-                self.axes.set_position([box.x0, box.y0, box.width * 0.88, box.height])
-                # Put a legend to the right of the current axis
-                self.axes.legend(loc='center left', bbox_to_anchor=(1, 0.5), prop={'size':8})
+            # Shink current axis by 15%
+            box = self.axes2.get_position()
+            self.axes2.set_position([box.x0, box.y0, box.width * 0.88, box.height])
+            # Put a legend to the right of the current axis
+            self.axes2.legend(loc='center left', bbox_to_anchor=(1, 0.5), prop={'size':8})
 
         self.canvas.draw()
 
@@ -975,6 +990,7 @@ class PlotFrame(wx.Frame):
             cbar = self.fig.colorbar(surf, shrink=0.5, aspect=5)
             cbar.set_label('Option Price', rotation=90)
 
+            ### TODO - mayavi ###
             # X2D, Y2D = numpy.mgrid[self.time, b]
             # print(X2D)
             # s = mlab.surf(Z2D)
@@ -984,7 +1000,7 @@ class PlotFrame(wx.Frame):
         if len(self.delta) > 0:
             Z2D = [[float(string) for string in inner] for inner in self.delta]
             self.axes.plot_surface(X2D, Y2D, Z2D, rstride=1, cstride=1,
-                antialiased=False, alpha=0.75, color='green')
+                antialiased=False, alpha=0.75, color='blue')
 
         if len(self.gamma) > 0:
             Z2D = [[float(string) for string in inner] for inner in self.gamma]
@@ -994,7 +1010,7 @@ class PlotFrame(wx.Frame):
         if len(self.theta) > 0:
             Z2D = [[float(string) for string in inner] for inner in self.theta]
             self.axes.plot_surface(X2D, Y2D, Z2D, rstride=1, cstride=1,
-                antialiased=False, alpha=0.75, color='red')
+                antialiased=False, alpha=0.75, color='green')
                 
         if len(self.rho) > 0:
             Z2D = [[float(string) for string in inner] for inner in self.rho]
