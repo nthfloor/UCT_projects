@@ -197,7 +197,7 @@ class PlotFrame(wx.Frame):
         self.panel = wx.Panel(self)
 
         # Create Figure and canvas objects
-        self.fig = Figure((6.0, 4.0), 100)
+        self.fig = Figure((6.0, 4.0))
         self.canvas = FigCanvas(self.panel, -1, self.fig)
         self.axes = self.fig.add_subplot(111)
 
@@ -659,6 +659,16 @@ class PlotFrame(wx.Frame):
                 self.effectCheck.SetValue(True)
                 return
             dlg.Destroy()
+            self.differenceCheck.Disable()
+            self.fillCheck.Disable()
+            self.optionPriceCheck.SetValue(False)
+            self.onOptionPrice()
+            self.optionPriceCheck.Disable()
+        else:
+            self.differenceCheck.Enable()
+            self.optionPriceCheck.Enable()
+            if self.current_view != 2:
+                self.fillCheck.Enable()
 
         # reload and replot data
         self.delta = self.fileReader.getDeltaValues(self.callRadio.GetValue(), 
@@ -930,7 +940,18 @@ class PlotFrame(wx.Frame):
         # set caption and axes labels
         self.axes2.set_xlabel('Time (Daily)')
         self.axes2.set_ylabel('Price (Rands)')
-        self.axes.set_ylabel('Price (Rands)')
+        if self.effectCheck.IsChecked():
+            self.axes.set_ylabel('Price (Rands)')
+            if hasattr(self, 'title'):
+                self.title.set_text('Option Prices and breakdown of the effects of Greeks')
+            else:
+                self.title = self.fig.suptitle('Option Prices and breakdown of the effects of Greeks')
+        else:
+            self.axes.set_ylabel('Greek Value')
+            if hasattr(self, 'title'):
+                self.title.set_text('Raw Greek values not in terms of option price')
+            else:
+                self.title = self.fig.suptitle('Greek values not in terms of option price')
 
         # set useblit True on gtkagg for enhanced performance
         # self.span = SpanSelector(self.axes, self.onselect, 'horizontal', useblit=True, rectprops=dict(alpha=0.5, facecolor='red'))
@@ -1011,11 +1032,28 @@ class PlotFrame(wx.Frame):
             # cbar = self.fig.colorbar(cset3, shrink=0.5, aspect=5)
             # cbar.set_label('Option Proce', rotation=90)
 
+        # set captions and axis labels
         self.axes.set_xlabel('Time (Days)')
         self.axes.set_xlim(0, 35)
         self.axes.set_ylabel('Bump Size')
         #~ self.axes.set_ylim(-3, 8)
-        self.axes.set_zlabel('Price (Rands)')
+        # self.axes.set_zlabel('Price (Rands)')
         # ~ self.axes.set_zlim(-100, 100)
+
+        if self.effectCheck.IsChecked():
+            if self.differenceCheck.IsChecked():
+                self.axes.set_zlabel('Greek Value')
+            else:
+                self.axes.set_zlabel('Price (Rands)')
+            if hasattr(self, 'title'):
+                self.title.set_text('Option Prices and breakdown of the effects of Greeks')
+            else:
+                self.title = self.fig.suptitle('Option Prices and breakdown of the effects of Greeks')
+        else:
+            self.axes.set_zlabel('Greek Value')
+            if hasattr(self, 'title'):
+                self.title.set_text('Raw Greek values not in terms of option price')
+            else:
+                self.title = self.fig.suptitle('Greek values not in terms of option price')
 
         self.canvas.draw()
