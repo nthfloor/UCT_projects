@@ -82,14 +82,14 @@ class Reader():
         # retrieve input data
         for row in myfile:
             # get strike price
-            if counter == 4:
+            if counter == 5:
                 self.strike_price = float(row[0].split(' ')[1])
             # get stock prices
-            if counter >= 15 and counter <= 45:
+            if counter >= 16 and counter <= 46:
                 self.stock_price_data.append(row[0].split(' ')[1])
 
             # get interest rates
-            if counter >= 46 and counter <= 76:
+            if counter >= 47 and counter <= 77:
                 self.interest_rate_data.append(row[0].split(' ')[1])
 
             counter += 1

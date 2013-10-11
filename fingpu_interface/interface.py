@@ -414,35 +414,14 @@ class PlotFrame(wx.Frame):
 
     def onBasicView(self, event=None):
         self.current_view = 0
-        
-        # show sliders panel
-        self.sliderPanel.Enable()
-        self.toolbar.Show()
-        self.fillCheck.Enable()
-        self.panel.Layout()
-        
         self.Plot_Data()
 
     def onAdvancedView(self, event=None):
-        self.current_view = 1
-        
-        # show sliders panel
-        self.sliderPanel.Enable()
-        self.toolbar.Show()
-        self.fillCheck.Enable()
-        self.panel.Layout()
-        
+        self.current_view = 1        
         self.Plot_Data()
 
     def onAdvanced3DView(self, event=None):
         self.current_view = 2
-        
-        # hide slider panel since will not be used
-        self.sliderPanel.Disable()
-        self.toolbar.Disable()
-        self.fillCheck.Disable()
-        self.panel.Layout()
-        
         self.Plot_Data()
 
     def onPrinterSetup(self,event=None):
@@ -883,10 +862,26 @@ class PlotFrame(wx.Frame):
 
     def Plot_Data(self):
         if self.current_view == 1:
+            # show sliders panel
+            self.sliderPanel.Enable()
+            self.toolbar.Enable()
+            self.fillCheck.Enable()
+            self.panel.Layout()
             self.Plot_Data_advanced()
         elif self.current_view == 2:
+            # hide slider panel since will not be used
+            self.sliderPanel.Disable()
+            self.toolbar.Disable()
+            self.fillCheck.Disable()
+            self.panel.Layout()
             self.Plot_Data_3D()
         elif self.current_view == 0:
+            # show sliders panel
+            self.sliderPanel.Enable()
+            self.toolbar.Enable()
+            self.fillCheck.Enable()
+            self.panel.Layout()
+            
             """ Basic 2D graph plotter """
             self.clearPlots()
             
