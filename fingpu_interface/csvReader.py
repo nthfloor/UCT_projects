@@ -69,7 +69,7 @@ class Reader():
 
         # put_option_data = map(float, put_option_data)
         # call_option_data = map(float, call_option_data)
-        # print(self.put_option_data)
+        #print(self.call_option_data)
         ifile.close()
 
     def loadInputFile(self, filename):

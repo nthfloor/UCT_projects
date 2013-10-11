@@ -57,6 +57,11 @@ class PlotFrame(wx.Frame):
         wx.Frame.__init__(self, None, -1, "Visualise Option Prices and Greeks", size=(300, 500))
         self.Bind(wx.EVT_KEY_DOWN, self.onKeyEvent)
 
+        # intialise variables when start program
+        self.viewLegend = False
+        self.viewGrid = True
+        self.viewFill = False
+        
         self.reInitialiseData()
         
         # build interface
@@ -68,9 +73,6 @@ class PlotFrame(wx.Frame):
 
     def reInitialiseData(self):
         self.fileReader = csvReader.Reader()
-        self.viewLegend = False
-        self.viewGrid = True
-        self.viewFill = False
         self.current_view = 0
         self.time = numpy.arange(0, 31, 1)
         self.indmin = 0
@@ -414,14 +416,29 @@ class PlotFrame(wx.Frame):
 
     def onBasicView(self, event=None):
         self.current_view = 0
+        # show sliders panel
+        self.sliderPanel.Enable()
+        self.toolbar.Enable()
+        self.fillCheck.Enable()
+        self.panel.Layout()
         self.Plot_Data()
 
     def onAdvancedView(self, event=None):
-        self.current_view = 1        
+        self.current_view = 1
+        # show sliders panel
+        self.sliderPanel.Enable()
+        self.toolbar.Enable()
+        self.fillCheck.Enable()
+        self.panel.Layout()
         self.Plot_Data()
 
     def onAdvanced3DView(self, event=None):
         self.current_view = 2
+        # hide slider panel since will not be used
+        self.sliderPanel.Disable()
+        self.toolbar.Disable()
+        self.fillCheck.Disable()
+        self.panel.Layout()   
         self.Plot_Data()
 
     def onPrinterSetup(self,event=None):
@@ -520,7 +537,7 @@ class PlotFrame(wx.Frame):
         self.theta = self.fileReader.getThetaValues(self.callRadio.GetValue(), self.thetaCheck.IsChecked())
         self.rho = self.fileReader.getRhoValues(self.callRadio.GetValue(), self.rhoCheck.IsChecked())
 
-        self.Plot_Data()
+        self.onBasicView()
 
     def onExit(self,event=None):
         dlg = wx.MessageDialog(None, 'Are you sure to exit?', 'Confirm', wx.YES_NO|wx.NO_DEFAULT|wx.ICON_QUESTION)
@@ -862,26 +879,10 @@ class PlotFrame(wx.Frame):
 
     def Plot_Data(self):
         if self.current_view == 1:
-            # show sliders panel
-            self.sliderPanel.Enable()
-            self.toolbar.Enable()
-            self.fillCheck.Enable()
-            self.panel.Layout()
             self.Plot_Data_advanced()
         elif self.current_view == 2:
-            # hide slider panel since will not be used
-            self.sliderPanel.Disable()
-            self.toolbar.Disable()
-            self.fillCheck.Disable()
-            self.panel.Layout()
             self.Plot_Data_3D()
-        elif self.current_view == 0:
-            # show sliders panel
-            self.sliderPanel.Enable()
-            self.toolbar.Enable()
-            self.fillCheck.Enable()
-            self.panel.Layout()
-            
+        elif self.current_view == 0:            
             """ Basic 2D graph plotter """
             self.clearPlots()
             
